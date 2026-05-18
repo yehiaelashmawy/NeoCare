@@ -283,9 +283,7 @@ class _HomeViewBodyState extends State<HomeViewBody> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(
-        0xFFF6F8FC,
-      ), // Ultra-clean hospital dashboard background
+      backgroundColor: AppColors.scaffoldBackground,
       body: SafeArea(
         child: Column(
           children: [
@@ -314,6 +312,23 @@ class _HomeViewBodyState extends State<HomeViewBody> {
   }
 
   Widget _buildHeaderBar() {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    final Color connectedBg = isDark ? const Color(0xFF0F5132).withOpacity(0.4) : const Color(0xFFE6F4EA);
+    final Color connectingBg = isDark ? const Color(0xFF664D03).withOpacity(0.4) : const Color(0xFFFEF7E0);
+    final Color errorBg = isDark ? const Color(0xFF842029).withOpacity(0.4) : const Color(0xFFFCE8E6);
+    final Color inactiveBg = isDark ? const Color(0xFF374151) : const Color(0xFFF1F3F4);
+
+    final Color connectedBorder = isDark ? const Color(0xFF0F5132) : const Color(0xFF34A853).withOpacity(0.3);
+    final Color connectingBorder = isDark ? const Color(0xFF664D03) : const Color(0xFFFBBC05).withOpacity(0.3);
+    final Color errorBorder = isDark ? const Color(0xFF842029) : const Color(0xFFD93025).withOpacity(0.3);
+    final Color inactiveBorder = isDark ? Colors.transparent : Colors.transparent;
+
+    final Color connectedText = isDark ? const Color(0xFF75B798) : const Color(0xFF137333);
+    final Color connectingText = isDark ? const Color(0xFFFFDA6A) : const Color(0xFFB06000);
+    final Color errorText = isDark ? const Color(0xFFEA868F) : const Color(0xFFD93025);
+    final Color inactiveText = isDark ? const Color(0xFFD1D5DB) : AppColors.textSecondary;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
       child: Row(
@@ -321,7 +336,7 @@ class _HomeViewBodyState extends State<HomeViewBody> {
         children: [
           Container(
             decoration: BoxDecoration(
-              color: AppColors.white,
+              color: AppColors.cardBackground,
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
@@ -345,21 +360,21 @@ class _HomeViewBodyState extends State<HomeViewBody> {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
                 color: _isConnected
-                    ? const Color(0xFFE6F4EA)
+                    ? connectedBg
                     : (_isConnecting
-                          ? const Color(0xFFFEF7E0)
+                          ? connectingBg
                           : (_esp32Ip.isNotEmpty
-                                ? const Color(0xFFFCE8E6)
-                                : const Color(0xFFF1F3F4))),
+                                ? errorBg
+                                : inactiveBg)),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: _isConnected
-                      ? const Color(0xFF34A853).withOpacity(0.3)
+                      ? connectedBorder
                       : (_isConnecting
-                            ? const Color(0xFFFBBC05).withOpacity(0.3)
+                            ? connectingBorder
                             : (_esp32Ip.isNotEmpty
-                                  ? const Color(0xFFD93025).withOpacity(0.3)
-                                  : Colors.transparent)),
+                                  ? errorBorder
+                                  : inactiveBorder)),
                 ),
               ),
               child: Row(
@@ -375,12 +390,12 @@ class _HomeViewBodyState extends State<HomeViewBody> {
                                     : Icons.cell_tower_rounded)),
                     size: 14,
                     color: _isConnected
-                        ? const Color(0xFF137333)
+                        ? connectedText
                         : (_isConnecting
-                              ? const Color(0xFFB06000)
+                              ? connectingText
                               : (_esp32Ip.isNotEmpty
-                                    ? const Color(0xFFD93025)
-                                    : AppColors.textSecondary)),
+                                    ? errorText
+                                    : inactiveText)),
                   ),
                   const SizedBox(width: 6),
                   Text(
@@ -395,12 +410,12 @@ class _HomeViewBodyState extends State<HomeViewBody> {
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                       color: _isConnected
-                          ? const Color(0xFF137333)
+                          ? connectedText
                           : (_isConnecting
-                                ? const Color(0xFFB06000)
+                                ? connectingText
                                 : (_esp32Ip.isNotEmpty
-                                      ? const Color(0xFFD93025)
-                                      : AppColors.textSecondary)),
+                                      ? errorText
+                                      : inactiveText)),
                     ),
                   ),
                 ],
@@ -409,7 +424,7 @@ class _HomeViewBodyState extends State<HomeViewBody> {
           ),
           Container(
             decoration: BoxDecoration(
-              color: AppColors.white,
+              color: AppColors.cardBackground,
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
@@ -421,7 +436,7 @@ class _HomeViewBodyState extends State<HomeViewBody> {
             ),
             child: IconButton(
               onPressed: _showConnectionDialog,
-              icon: const Icon(
+              icon: Icon(
                 Icons.settings_rounded,
                 color: AppColors.textSecondary,
               ),

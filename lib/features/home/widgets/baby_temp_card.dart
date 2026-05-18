@@ -20,7 +20,7 @@ class BabyTempCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20.0),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
           color: isDanger ? const Color(0xFFD93025).withOpacity(0.25) : Colors.transparent,
@@ -46,8 +46,8 @@ class BabyTempCard extends StatelessWidget {
                   Container(
                     width: 38,
                     height: 38,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFE8F0FE),
+                    decoration: BoxDecoration(
+                      color: AppColors.brandIconBackground,
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(

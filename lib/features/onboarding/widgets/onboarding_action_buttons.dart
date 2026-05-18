@@ -88,7 +88,7 @@ class OnboardingActionButtons extends StatelessWidget {
                             child: TextButton(
                               onPressed: onSkip,
                               style: TextButton.styleFrom(
-                                backgroundColor: const Color(0xFFF1F5FB),
+                                backgroundColor: AppColors.buttonBackgroundLight,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(30),
                                 ),

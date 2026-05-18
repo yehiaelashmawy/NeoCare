@@ -18,7 +18,7 @@ class WeightCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
@@ -34,11 +34,11 @@ class WeightCard extends StatelessWidget {
           Container(
             width: 48,
             height: 48,
-            decoration: const BoxDecoration(
-              color: Color(0xFFF1F3F4),
+            decoration: BoxDecoration(
+              color: AppColors.iconContainerBackground,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.scale_rounded,
               color: AppColors.textSecondary,
               size: 22,

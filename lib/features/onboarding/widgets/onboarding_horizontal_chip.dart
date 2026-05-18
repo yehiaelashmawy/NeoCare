@@ -25,7 +25,7 @@ class OnboardingHorizontalChip extends StatelessWidget {
         vertical: verticalPadding,
       ),
       decoration: BoxDecoration(
-        color: const Color(0xFFF3F7FD),
+        color: AppColors.chipBackground,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Row(

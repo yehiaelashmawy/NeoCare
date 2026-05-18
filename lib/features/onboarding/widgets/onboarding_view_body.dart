@@ -92,7 +92,7 @@ class _OnboardingViewBodyState extends State<OnboardingViewBody> {
     return Container(
       width: double.infinity,
       height: double.infinity,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
             AppColors.bgGradientStart,

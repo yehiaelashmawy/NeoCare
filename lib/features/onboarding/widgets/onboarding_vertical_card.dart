@@ -33,7 +33,7 @@ class OnboardingVerticalCard extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: cardPaddingH, vertical: cardPaddingV),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(

@@ -27,7 +27,7 @@ class TelemetryCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
           color: isDanger ? const Color(0xFFD93025).withOpacity(0.25) : Colors.transparent,
