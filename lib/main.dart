@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:neocare/core/theme/app_theme.dart';
 import 'package:neocare/features/splash/splash_view.dart';
 
-void main() {
+void main() async {
+  // Required by shared_preferences 2.3.x (Pigeon-based Android channels)
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const NeoCareApp());
 }
 

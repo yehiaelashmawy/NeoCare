@@ -140,25 +140,14 @@ class OnboardingPageItem extends StatelessWidget {
 
     if (index == 0 || index == 2) {
       // PAGE 1 & 3: Centered, rounded, horizontal wrapped badges
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: isTablet ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+      return Wrap(
+        alignment: isTablet ? WrapAlignment.start : WrapAlignment.center,
+        spacing: 12,
+        runSpacing: 12,
         children: [
-          Row(
-            mainAxisAlignment: isTablet ? MainAxisAlignment.start : MainAxisAlignment.center,
-            children: [
-              OnboardingHorizontalChip(badge: page.badges[0]),
-              const SizedBox(width: 12),
-              OnboardingHorizontalChip(badge: page.badges[1]),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: isTablet ? MainAxisAlignment.start : MainAxisAlignment.center,
-            children: [
-              OnboardingHorizontalChip(badge: page.badges[2]),
-            ],
-          ),
+          OnboardingHorizontalChip(badge: page.badges[0]),
+          OnboardingHorizontalChip(badge: page.badges[1]),
+          OnboardingHorizontalChip(badge: page.badges[2]),
         ],
       );
     } else {

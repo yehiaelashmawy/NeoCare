@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:neocare/core/utils/app_colors.dart';
 import 'package:neocare/core/utils/app_styles.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 import 'package:neocare/features/home/widgets/baby_temp_card.dart';
 import 'package:neocare/features/home/widgets/live_camera_card.dart';
@@ -38,9 +39,13 @@ class _HomeViewBodyState extends State<HomeViewBody> {
   Timer? _pollingTimer;
   Timer? _simulationTimer;
 
+  late final AudioPlayer _audioPlayer;
+  bool _isAudioPlaying = false;
+
   @override
   void initState() {
     super.initState();
+    _audioPlayer = AudioPlayer();
     // Default to simulation mode until ESP32 IP is supplied
     _startSimulation();
   }
@@ -57,7 +62,9 @@ class _HomeViewBodyState extends State<HomeViewBody> {
 
       final url = Uri.parse('http://$_esp32Ip/data');
       try {
-        final response = await http.get(url).timeout(const Duration(seconds: 2));
+        final response = await http
+            .get(url)
+            .timeout(const Duration(seconds: 2));
         if (response.statusCode == 200) {
           final data = json.decode(response.body);
           if (mounted) {
@@ -73,6 +80,7 @@ class _HomeViewBodyState extends State<HomeViewBody> {
               _isConnected = true;
               _isConnecting = false;
             });
+            _updateAlarmSound();
           }
         } else {
           // If status code is not 200, fallback to simulation
@@ -100,12 +108,20 @@ class _HomeViewBodyState extends State<HomeViewBody> {
   void _applySimulatedTick(double factor) {
     setState(() {
       // Slow realistic oscillations
-      _airTemp = double.parse((28.0 + 0.3 * (factor % 2 * 0.5 - 0.25)).toStringAsFixed(1));
-      _humidity = double.parse((60.0 + 1.2 * (factor % 3 * 0.4 - 0.2)).toStringAsFixed(0));
-      _babyTemp = double.parse((36.8 + 0.08 * (factor % 1.5 * 0.6 - 0.3)).toStringAsFixed(1));
+      _airTemp = double.parse(
+        (28 + 0.3 * (factor % 2 * 0.5 - 0.25)).toStringAsFixed(1),
+      );
+      _humidity = double.parse(
+        (60.0 + 1.2 * (factor % 3 * 0.4 - 0.2)).toStringAsFixed(0),
+      );
+      _babyTemp = double.parse(
+        (36.8 + 0.08 * (factor % 1.5 * 0.6 - 0.3)).toStringAsFixed(1),
+      );
       _airQuality = (42 + 2 * (factor % 4 - 2).toInt()).toInt();
       _noise = (35 + 3 * (factor % 5 - 2.5).toInt()).toInt();
-      _weight = double.parse((3.2 + 0.02 * (factor % 2.5 * 0.4 - 0.2)).toStringAsFixed(1));
+      _weight = double.parse(
+        (3.2 + 0.02 * (factor % 2.5 * 0.4 - 0.2)).toStringAsFixed(1),
+      );
 
       // Evaluate simulator safety thresholds matching ESP32 logic
       _isDanger = false;
@@ -128,6 +144,30 @@ class _HomeViewBodyState extends State<HomeViewBody> {
         _statusMessage = "Baby Crying";
       }
     });
+    _updateAlarmSound();
+  }
+
+  void _updateAlarmSound() async {
+    if (_isDanger) {
+      if (!_isAudioPlaying) {
+        _isAudioPlaying = true;
+        try {
+          await _audioPlayer.setReleaseMode(ReleaseMode.loop);
+          await _audioPlayer.play(AssetSource('audio/alarm.mp3'));
+        } catch (e) {
+          debugPrint("Error playing emergency sound: $e");
+        }
+      }
+    } else {
+      if (_isAudioPlaying) {
+        _isAudioPlaying = false;
+        try {
+          await _audioPlayer.stop();
+        } catch (e) {
+          debugPrint("Error stopping emergency sound: $e");
+        }
+      }
+    }
   }
 
   // Fallback high-fidelity simulator
@@ -145,7 +185,9 @@ class _HomeViewBodyState extends State<HomeViewBody> {
 
   // Display beautiful dialog to connect real-time ESP32 local server
   void _showConnectionDialog() {
-    final TextEditingController ipController = TextEditingController(text: _esp32Ip);
+    final TextEditingController ipController = TextEditingController(
+      text: _esp32Ip,
+    );
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -156,7 +198,10 @@ class _HomeViewBodyState extends State<HomeViewBody> {
             const SizedBox(width: 10),
             Text(
               'ESP32 Configuration',
-              style: AppStyles.headingMedium.copyWith(fontSize: 18, fontWeight: FontWeight.bold),
+              style: AppStyles.headingMedium.copyWith(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ],
         ),
@@ -176,7 +221,9 @@ class _HomeViewBodyState extends State<HomeViewBody> {
                 hintText: 'e.g. 192.168.1.100',
                 labelText: 'ESP32 Local IP',
                 prefixIcon: const Icon(Icons.settings_ethernet_rounded),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
               ),
             ),
           ],
@@ -192,7 +239,10 @@ class _HomeViewBodyState extends State<HomeViewBody> {
                 _isConnecting = false;
               });
             },
-            child: Text('Clear / Simulate', style: TextStyle(color: Colors.red[700])),
+            child: Text(
+              'Clear / Simulate',
+              style: TextStyle(color: Colors.red[700]),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
@@ -208,9 +258,14 @@ class _HomeViewBodyState extends State<HomeViewBody> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
-            child: const Text('Save & Connect', style: TextStyle(color: AppColors.white)),
+            child: const Text(
+              'Save & Connect',
+              style: TextStyle(color: AppColors.white),
+            ),
           ),
         ],
       ),
@@ -221,13 +276,16 @@ class _HomeViewBodyState extends State<HomeViewBody> {
   void dispose() {
     _pollingTimer?.cancel();
     _simulationTimer?.cancel();
+    _audioPlayer.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F8FC), // Ultra-clean hospital dashboard background
+      backgroundColor: const Color(
+        0xFFF6F8FC,
+      ), // Ultra-clean hospital dashboard background
       body: SafeArea(
         child: Column(
           children: [
@@ -236,7 +294,8 @@ class _HomeViewBodyState extends State<HomeViewBody> {
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final bool isTablet = constraints.maxWidth > 800;
-                  final bool isSmallTablet = constraints.maxWidth > 600 && constraints.maxWidth <= 800;
+                  final bool isSmallTablet =
+                      constraints.maxWidth > 600 && constraints.maxWidth <= 800;
 
                   if (isTablet) {
                     return _buildLargeTabletLayout();
@@ -288,15 +347,19 @@ class _HomeViewBodyState extends State<HomeViewBody> {
                 color: _isConnected
                     ? const Color(0xFFE6F4EA)
                     : (_isConnecting
-                        ? const Color(0xFFFEF7E0)
-                        : (_esp32Ip.isNotEmpty ? const Color(0xFFFCE8E6) : const Color(0xFFF1F3F4))),
+                          ? const Color(0xFFFEF7E0)
+                          : (_esp32Ip.isNotEmpty
+                                ? const Color(0xFFFCE8E6)
+                                : const Color(0xFFF1F3F4))),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: _isConnected
                       ? const Color(0xFF34A853).withOpacity(0.3)
                       : (_isConnecting
-                          ? const Color(0xFFFBBC05).withOpacity(0.3)
-                          : (_esp32Ip.isNotEmpty ? const Color(0xFFD93025).withOpacity(0.3) : Colors.transparent)),
+                            ? const Color(0xFFFBBC05).withOpacity(0.3)
+                            : (_esp32Ip.isNotEmpty
+                                  ? const Color(0xFFD93025).withOpacity(0.3)
+                                  : Colors.transparent)),
                 ),
               ),
               child: Row(
@@ -306,30 +369,38 @@ class _HomeViewBodyState extends State<HomeViewBody> {
                     _isConnected
                         ? Icons.wifi_tethering_rounded
                         : (_isConnecting
-                            ? Icons.wifi_tethering_off_rounded
-                            : (_esp32Ip.isNotEmpty ? Icons.warning_amber_rounded : Icons.cell_tower_rounded)),
+                              ? Icons.wifi_tethering_off_rounded
+                              : (_esp32Ip.isNotEmpty
+                                    ? Icons.warning_amber_rounded
+                                    : Icons.cell_tower_rounded)),
                     size: 14,
                     color: _isConnected
                         ? const Color(0xFF137333)
                         : (_isConnecting
-                            ? const Color(0xFFB06000)
-                            : (_esp32Ip.isNotEmpty ? const Color(0xFFD93025) : AppColors.textSecondary)),
+                              ? const Color(0xFFB06000)
+                              : (_esp32Ip.isNotEmpty
+                                    ? const Color(0xFFD93025)
+                                    : AppColors.textSecondary)),
                   ),
                   const SizedBox(width: 6),
                   Text(
                     _isConnected
                         ? 'ESP32 Connected'
                         : (_isConnecting
-                            ? 'Connecting...'
-                            : (_esp32Ip.isNotEmpty ? 'Reconnecting...' : 'Simulator Active')),
+                              ? 'Connecting...'
+                              : (_esp32Ip.isNotEmpty
+                                    ? 'Reconnecting...'
+                                    : 'Simulator Active')),
                     style: AppStyles.bodyMedium.copyWith(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                       color: _isConnected
                           ? const Color(0xFF137333)
                           : (_isConnecting
-                              ? const Color(0xFFB06000)
-                              : (_esp32Ip.isNotEmpty ? const Color(0xFFD93025) : AppColors.textSecondary)),
+                                ? const Color(0xFFB06000)
+                                : (_esp32Ip.isNotEmpty
+                                      ? const Color(0xFFD93025)
+                                      : AppColors.textSecondary)),
                     ),
                   ),
                 ],
@@ -380,10 +451,7 @@ class _HomeViewBodyState extends State<HomeViewBody> {
                     statusMessage: _statusMessage,
                   ),
                   const SizedBox(height: 24),
-                  BabyTempCard(
-                    babyTemp: _babyTemp,
-                    isDanger: _isDanger,
-                  ),
+                  BabyTempCard(babyTemp: _babyTemp, isDanger: _isDanger),
                 ],
               ),
             ),
@@ -476,10 +544,7 @@ class _HomeViewBodyState extends State<HomeViewBody> {
             children: [
               Expanded(
                 flex: 1,
-                child: BabyTempCard(
-                  babyTemp: _babyTemp,
-                  isDanger: _isDanger,
-                ),
+                child: BabyTempCard(babyTemp: _babyTemp, isDanger: _isDanger),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -588,10 +653,7 @@ class _HomeViewBodyState extends State<HomeViewBody> {
             ],
           ),
           const SizedBox(height: 16),
-          BabyTempCard(
-            babyTemp: _babyTemp,
-            isDanger: _isDanger,
-          ),
+          BabyTempCard(babyTemp: _babyTemp, isDanger: _isDanger),
           const SizedBox(height: 16),
           Row(
             children: [

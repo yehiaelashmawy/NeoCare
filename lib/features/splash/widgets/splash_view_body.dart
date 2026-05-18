@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:neocare/core/services/app_preferences.dart';
 import 'package:neocare/core/utils/app_colors.dart';
 import 'package:neocare/core/utils/app_styles.dart';
+import 'package:neocare/features/home/home_view.dart';
 import 'package:neocare/features/onboarding/onboarding_view.dart';
 
 class SplashViewBody extends StatefulWidget {
@@ -66,14 +68,21 @@ class _SplashViewBodyState extends State<SplashViewBody>
     _navigateToNext();
   }
 
-  void _navigateToNext() {
-    Future.delayed(const Duration(milliseconds: 3000), () {
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const OnboardingView()),
-        );
-      }
-    });
+  Future<void> _navigateToNext() async {
+    // Wait for the splash animation to finish
+    await Future.delayed(const Duration(milliseconds: 3000));
+    if (!mounted) return;
+
+    // Delegate to centralised AppPreferences service
+    final bool onboardingSeen = await AppPreferences.isOnboardingSeen();
+
+    if (!mounted) return;
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (context) =>
+            onboardingSeen ? const HomeView() : const OnboardingView(),
+      ),
+    );
   }
 
   @override

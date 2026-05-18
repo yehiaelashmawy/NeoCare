@@ -124,13 +124,15 @@ class BabyTempCard extends StatelessWidget {
           // Label String & Safe range progress bar row
           Row(
             children: [
-              Text(
-                'Target Range: 36.0 - 37.0',
-                style: AppStyles.bodyMedium.copyWith(
-                  fontSize: 12,
-                  color: AppColors.textLight,
-                  fontWeight: FontWeight.bold,
-                  overflow: TextOverflow.ellipsis,
+              Flexible(
+                child: Text(
+                  'Target Range: 36.0 - 37.0',
+                  style: AppStyles.bodyMedium.copyWith(
+                    fontSize: 12,
+                    color: AppColors.textLight,
+                    fontWeight: FontWeight.bold,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ),
               const SizedBox(width: 16),

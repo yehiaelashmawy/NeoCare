@@ -4,6 +4,7 @@ import 'package:neocare/core/utils/app_colors.dart';
 import 'package:neocare/features/onboarding/models/onboarding_page_model.dart';
 import 'package:neocare/features/onboarding/widgets/onboarding_action_buttons.dart';
 import 'package:neocare/features/onboarding/widgets/onboarding_page_item.dart';
+import 'package:neocare/core/services/app_preferences.dart';
 
 class OnboardingViewBody extends StatefulWidget {
   const OnboardingViewBody({super.key});
@@ -70,7 +71,11 @@ class _OnboardingViewBodyState extends State<OnboardingViewBody> {
     }
   }
 
-  void _navigateToLogin() {
+  Future<void> _navigateToLogin() async {
+    // Delegate to centralised AppPreferences service
+    await AppPreferences.setOnboardingSeen();
+
+    if (!mounted) return;
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (context) => const HomeView()),
     );
