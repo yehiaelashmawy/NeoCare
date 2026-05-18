@@ -1,6 +1,6 @@
 {
-    "name": "neocare",
-    "short_name": "neocare",
+    "name": "NeoCare",
+    "short_name": "NeoCare",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
