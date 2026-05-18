@@ -12,6 +12,7 @@ import 'package:neocare/features/home/widgets/telemetry_card.dart';
 import 'package:neocare/features/home/widgets/weight_card.dart';
 import 'package:neocare/features/home/models/telemetry_model.dart';
 import 'package:neocare/features/home/services/telemetry_service.dart';
+import 'package:neocare/core/services/app_preferences.dart';
 
 class HomeViewBody extends StatefulWidget {
   const HomeViewBody({super.key});
@@ -27,6 +28,7 @@ class _HomeViewBodyState extends State<HomeViewBody> {
 
   // Networking variables
   String _esp32Ip = "";
+  String _cameraUrl = "http://192.168.1.9:8080";
   bool _isConnected = false;
   bool _isConnecting = false;
   Timer? _pollingTimer;
@@ -39,8 +41,26 @@ class _HomeViewBodyState extends State<HomeViewBody> {
   void initState() {
     super.initState();
     _audioPlayer = AudioPlayer();
+    _loadPreferences();
     // Default to simulation mode until ESP32 IP is supplied
     _startSimulation();
+  }
+
+  Future<void> _loadPreferences() async {
+    final savedEspIp = await AppPreferences.getEsp32Ip();
+    final savedCamUrl = await AppPreferences.getCameraUrl();
+    if (mounted) {
+      setState(() {
+        if (savedCamUrl.isNotEmpty) {
+          _cameraUrl = savedCamUrl;
+        }
+        if (savedEspIp.isNotEmpty) {
+          _esp32Ip = savedEspIp;
+          _isConnecting = true;
+          _startPolling();
+        }
+      });
+    }
   }
 
   // Poll real-time data from the ESP32 server over WiFi
@@ -127,6 +147,9 @@ class _HomeViewBodyState extends State<HomeViewBody> {
     final TextEditingController ipController = TextEditingController(
       text: _esp32Ip,
     );
+    final TextEditingController cameraUrlController = TextEditingController(
+      text: _cameraUrl,
+    );
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -144,28 +167,48 @@ class _HomeViewBodyState extends State<HomeViewBody> {
             ),
           ],
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Enter your local ESP32 IP Address to link live telemetry parameters:',
-              style: AppStyles.bodyMedium.copyWith(color: AppColors.textLight),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: ipController,
-              keyboardType: TextInputType.url,
-              decoration: InputDecoration(
-                hintText: 'e.g. 192.168.1.100',
-                labelText: 'ESP32 Local IP',
-                prefixIcon: const Icon(Icons.settings_ethernet_rounded),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Enter your local ESP32 IP Address to link live telemetry parameters:',
+                style: AppStyles.bodyMedium.copyWith(color: AppColors.textLight),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: ipController,
+                keyboardType: TextInputType.url,
+                decoration: InputDecoration(
+                  hintText: 'e.g. 192.168.1.100',
+                  labelText: 'ESP32 Local IP',
+                  prefixIcon: const Icon(Icons.settings_ethernet_rounded),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 20),
+              Text(
+                'Enter your Live Camera Stream IP/URL:',
+                style: AppStyles.bodyMedium.copyWith(color: AppColors.textLight),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: cameraUrlController,
+                keyboardType: TextInputType.url,
+                decoration: InputDecoration(
+                  hintText: 'e.g. http://192.168.1.9:8080',
+                  labelText: 'Live Camera URL',
+                  prefixIcon: const Icon(Icons.videocam_rounded),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -174,9 +217,12 @@ class _HomeViewBodyState extends State<HomeViewBody> {
               _startSimulation();
               setState(() {
                 _esp32Ip = "";
+                _cameraUrl = "";
                 _isConnected = false;
                 _isConnecting = false;
               });
+              AppPreferences.setEsp32Ip("");
+              AppPreferences.setCameraUrl("");
             },
             child: Text(
               'Clear / Simulate',
@@ -186,12 +232,26 @@ class _HomeViewBodyState extends State<HomeViewBody> {
           ElevatedButton(
             onPressed: () {
               final newIp = ipController.text.trim();
+              final newCameraUrl = cameraUrlController.text.trim();
+              setState(() {
+                _cameraUrl = newCameraUrl;
+              });
+              AppPreferences.setCameraUrl(newCameraUrl);
               if (newIp.isNotEmpty) {
                 setState(() {
                   _esp32Ip = newIp;
                   _isConnecting = true;
                 });
+                AppPreferences.setEsp32Ip(newIp);
                 _startPolling();
+              } else {
+                setState(() {
+                  _esp32Ip = "";
+                  _isConnected = false;
+                  _isConnecting = false;
+                });
+                AppPreferences.setEsp32Ip("");
+                _startSimulation();
               }
               Navigator.pop(context);
             },
@@ -403,6 +463,13 @@ class _HomeViewBodyState extends State<HomeViewBody> {
                     isTablet: true,
                     isDanger: _telemetry.isDanger,
                     statusMessage: _telemetry.statusMessage,
+                    cameraUrl: _cameraUrl,
+                    onCameraUrlChanged: (newUrl) {
+                      setState(() {
+                        _cameraUrl = newUrl;
+                      });
+                      AppPreferences.setCameraUrl(newUrl);
+                    },
                   ),
                   const SizedBox(height: 24),
                   BabyTempCard(babyTemp: _telemetry.babyTemp, isDanger: _telemetry.isDanger),
@@ -491,6 +558,13 @@ class _HomeViewBodyState extends State<HomeViewBody> {
             isTablet: true,
             isDanger: _telemetry.isDanger,
             statusMessage: _telemetry.statusMessage,
+            cameraUrl: _cameraUrl,
+            onCameraUrlChanged: (newUrl) {
+              setState(() {
+                _cameraUrl = newUrl;
+              });
+              AppPreferences.setCameraUrl(newUrl);
+            },
           ),
           const SizedBox(height: 24),
           Row(
@@ -579,6 +653,13 @@ class _HomeViewBodyState extends State<HomeViewBody> {
             isTablet: false,
             isDanger: _telemetry.isDanger,
             statusMessage: _telemetry.statusMessage,
+            cameraUrl: _cameraUrl,
+            onCameraUrlChanged: (newUrl) {
+              setState(() {
+                _cameraUrl = newUrl;
+              });
+              AppPreferences.setCameraUrl(newUrl);
+            },
           ),
           const SizedBox(height: 20),
           Row(

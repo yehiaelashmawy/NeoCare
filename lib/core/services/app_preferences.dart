@@ -28,4 +28,32 @@ class AppPreferences {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_keyOnboardingSeen);
   }
+
+  // ─── Network Settings ─────────────────────────────────────────────────────
+  static const String _keyEsp32Ip = 'esp32_ip';
+  static const String _keyCameraUrl = 'camera_url';
+
+  /// Returns the saved ESP32 Local IP address.
+  static Future<String> getEsp32Ip() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyEsp32Ip) ?? "";
+  }
+
+  /// Saves the ESP32 Local IP address.
+  static Future<void> setEsp32Ip(String ip) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyEsp32Ip, ip);
+  }
+
+  /// Returns the saved Camera URL.
+  static Future<String> getCameraUrl() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyCameraUrl) ?? "http://192.168.1.9:8080";
+  }
+
+  /// Saves the Camera URL.
+  static Future<void> setCameraUrl(String url) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyCameraUrl, url);
+  }
 }

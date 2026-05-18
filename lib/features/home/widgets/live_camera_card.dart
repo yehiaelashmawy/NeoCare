@@ -4,17 +4,22 @@ import 'package:flutter/material.dart';
 import 'package:neocare/core/utils/app_colors.dart';
 import 'package:neocare/core/utils/app_styles.dart';
 import 'package:neocare/features/home/widgets/live_dot_blinker.dart';
+import 'package:neocare/features/home/widgets/mjpeg_stream_player.dart';
 
 class LiveCameraCard extends StatefulWidget {
   final bool isTablet;
   final bool isDanger;
   final String statusMessage;
+  final String? cameraUrl;
+  final ValueChanged<String>? onCameraUrlChanged;
 
   const LiveCameraCard({
     super.key,
     this.isTablet = false,
     required this.isDanger,
     required this.statusMessage,
+    this.cameraUrl,
+    this.onCameraUrlChanged,
   });
 
   @override
@@ -24,9 +29,13 @@ class LiveCameraCard extends StatefulWidget {
 class _LiveCameraCardState extends State<LiveCameraCard> {
   bool _isZoomed = false;
   bool _isLightOn = false;
+  int _reconnectKey = 0;
 
   @override
   Widget build(BuildContext context) {
+    final bool hasLiveStream =
+        widget.cameraUrl != null && widget.cameraUrl!.isNotEmpty;
+
     return Container(
       width: double.infinity,
       height: 220,
@@ -45,13 +54,25 @@ class _LiveCameraCardState extends State<LiveCameraCard> {
         borderRadius: BorderRadius.circular(28),
         child: Stack(
           children: [
-            // Live Generated Camera Feed Image
+            // Live Generated Camera Feed Image or MJPEG Stream
             Positioned.fill(
-              child: Image.asset(
-                'assets/images/incubator_feed.png',
-                fit: BoxFit.cover,
-                color: _isLightOn ? Colors.transparent : Colors.black.withOpacity(0.15),
-                colorBlendMode: BlendMode.darken,
+              child: Transform.scale(
+                scale: _isZoomed ? 1.4 : 1.0,
+                alignment: Alignment.center,
+                child: hasLiveStream
+                    ? MjpegStreamPlayer(
+                        key: ValueKey('${widget.cameraUrl}_$_reconnectKey'),
+                        streamUrl: widget.cameraUrl!,
+                        fit: BoxFit.cover,
+                      )
+                    : Image.asset(
+                        'assets/images/incubator_feed.png',
+                        fit: BoxFit.cover,
+                        color: _isLightOn
+                            ? Colors.transparent
+                            : Colors.black.withOpacity(0.15),
+                        colorBlendMode: BlendMode.darken,
+                      ),
               ),
             ),
 
@@ -60,7 +81,10 @@ class _LiveCameraCardState extends State<LiveCameraCard> {
               Positioned.fill(
                 child: Container(
                   decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.primary.withOpacity(0.5), width: 3),
+                    border: Border.all(
+                      color: AppColors.primary.withOpacity(0.5),
+                      width: 3,
+                    ),
                   ),
                 ),
               ),
@@ -70,7 +94,10 @@ class _LiveCameraCardState extends State<LiveCameraCard> {
               top: 14,
               left: 14,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.black.withOpacity(0.4),
                   borderRadius: BorderRadius.circular(20),
@@ -80,7 +107,7 @@ class _LiveCameraCardState extends State<LiveCameraCard> {
                     const LiveDotBlinker(),
                     const SizedBox(width: 6),
                     Text(
-                      'LIVE',
+                      hasLiveStream ? 'LIVE STREAM' : 'LIVE SIM',
                       style: AppStyles.bodyMedium.copyWith(
                         color: AppColors.white,
                         fontSize: 10,
@@ -97,7 +124,10 @@ class _LiveCameraCardState extends State<LiveCameraCard> {
               top: 14,
               right: 14,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: widget.isDanger
                       ? const Color(0xFFD93025).withOpacity(0.85)
@@ -107,13 +137,17 @@ class _LiveCameraCardState extends State<LiveCameraCard> {
                 child: Row(
                   children: [
                     Icon(
-                      widget.isDanger ? Icons.warning_amber_rounded : Icons.verified_user_rounded,
+                      widget.isDanger
+                          ? Icons.warning_amber_rounded
+                          : Icons.verified_user_rounded,
                       size: 12,
                       color: AppColors.white,
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      widget.isDanger ? widget.statusMessage.toUpperCase() : 'STABLE',
+                      widget.isDanger
+                          ? widget.statusMessage.toUpperCase()
+                          : 'STABLE',
                       style: AppStyles.bodyMedium.copyWith(
                         color: AppColors.white,
                         fontSize: 10,
@@ -130,7 +164,10 @@ class _LiveCameraCardState extends State<LiveCameraCard> {
               bottom: 14,
               left: 14,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.white.withOpacity(0.85),
                   borderRadius: BorderRadius.circular(16),
@@ -165,9 +202,13 @@ class _LiveCameraCardState extends State<LiveCameraCard> {
                             });
                           },
                           child: Icon(
-                            _isZoomed ? Icons.zoom_out_map_rounded : Icons.zoom_in_rounded,
+                            _isZoomed
+                                ? Icons.zoom_out_map_rounded
+                                : Icons.zoom_in_rounded,
                             size: 18,
-                            color: _isZoomed ? AppColors.primary : AppColors.textPrimary,
+                            color: _isZoomed
+                                ? AppColors.primary
+                                : AppColors.textPrimary,
                           ),
                         ),
                         const SizedBox(width: 14),
@@ -179,9 +220,39 @@ class _LiveCameraCardState extends State<LiveCameraCard> {
                             });
                           },
                           child: Icon(
-                            _isLightOn ? Icons.wb_sunny_rounded : Icons.wb_sunny_outlined,
+                            _isLightOn
+                                ? Icons.wb_sunny_rounded
+                                : Icons.wb_sunny_outlined,
                             size: 18,
-                            color: _isLightOn ? Colors.amber[700] : AppColors.textPrimary,
+                            color: _isLightOn
+                                ? Colors.amber[700]
+                                : AppColors.textPrimary,
+                          ),
+                        ),
+                        if (hasLiveStream) ...[
+                          const SizedBox(width: 14),
+                          // Reconnect/Refresh stream
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _reconnectKey++;
+                              });
+                            },
+                            child: Icon(
+                              Icons.refresh_rounded,
+                              size: 18,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ],
+                        const SizedBox(width: 14),
+                        // Settings / IP configuration
+                        GestureDetector(
+                          onTap: _showCameraIpDialog,
+                          child: Icon(
+                            Icons.settings_rounded,
+                            size: 18,
+                            color: AppColors.textPrimary,
                           ),
                         ),
                       ],
@@ -193,6 +264,146 @@ class _LiveCameraCardState extends State<LiveCameraCard> {
           ],
         ),
       ),
+    );
+  }
+
+  void _showCameraIpDialog() {
+    final TextEditingController controller = TextEditingController(
+      text: widget.cameraUrl ?? "",
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        final bool isDark = Theme.of(context).brightness == Brightness.dark;
+        return AlertDialog(
+          backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          title: Row(
+            children: [
+              const Icon(
+                Icons.videocam_rounded,
+                color: AppColors.primary,
+                size: 24,
+              ),
+              const SizedBox(width: 10),
+              Text(
+                'Camera Configuration',
+                style: AppStyles.headingMedium.copyWith(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Enter the IP Address or URL of your MJPEG Camera Stream:',
+                style: AppStyles.bodyMedium.copyWith(
+                  color: isDark ? AppColors.white.withOpacity(0.7) : AppColors.textLight,
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: controller,
+                keyboardType: TextInputType.url,
+                autofocus: true,
+                style: TextStyle(
+                  color: isDark ? Colors.white : AppColors.textPrimary,
+                  fontSize: 14,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'e.g. 192.168.1.9:8080',
+                  labelText: 'Camera IP / URL',
+                  labelStyle: TextStyle(
+                    color: isDark ? AppColors.white.withOpacity(0.6) : AppColors.textSecondary,
+                  ),
+                  prefixIcon: const Icon(Icons.link_rounded, color: AppColors.primary),
+                  filled: true,
+                  fillColor: isDark ? const Color(0xFF334155) : const Color(0xFFF8FAFC),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Note: Both raw IP addresses (e.g. 192.168.1.9:8080) and complete HTTP/HTTPS links are supported.',
+                style: AppStyles.bodyMedium.copyWith(
+                  color: isDark ? AppColors.white.withOpacity(0.4) : AppColors.textSecondary.withOpacity(0.7),
+                  fontSize: 10,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  color: isDark ? AppColors.white.withOpacity(0.6) : AppColors.textSecondary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            if (widget.cameraUrl != null && widget.cameraUrl!.isNotEmpty)
+              TextButton(
+                onPressed: () {
+                  widget.onCameraUrlChanged?.call("");
+                  Navigator.pop(context);
+                },
+                child: Text(
+                  'Disconnect / Simulator',
+                  style: TextStyle(
+                    color: Colors.red[600],
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ElevatedButton(
+              onPressed: () {
+                final url = controller.text.trim();
+                widget.onCameraUrlChanged?.call(url);
+                Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              ),
+              child: const Text(
+                'Save & Link',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
