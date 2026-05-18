@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:neocare/core/theme/app_theme.dart';
+import 'package:neocare/features/splash/splash_view.dart';
 
 void main() {
   runApp(const NeoCareApp());
@@ -11,7 +13,8 @@ class NeoCareApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: Scaffold(body: Column()),
+      theme: AppTheme.lightTheme,
+      home: const SplashView(),
     );
   }
 }
