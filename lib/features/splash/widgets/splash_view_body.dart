@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:neocare/core/utils/app_colors.dart';
 import 'package:neocare/core/utils/app_styles.dart';
+import 'package:neocare/features/onboarding/onboarding_view.dart';
 
 class SplashViewBody extends StatefulWidget {
   const SplashViewBody({super.key});
@@ -68,10 +69,9 @@ class _SplashViewBodyState extends State<SplashViewBody>
   void _navigateToNext() {
     Future.delayed(const Duration(milliseconds: 3000), () {
       if (mounted) {
-        // TODO: Navigate to the next view (e.g. OnboardingView or LoginView)
-        // Navigator.of(context).pushReplacement(
-        //   MaterialPageRoute(builder: (context) => const OnboardingView()),
-        // );
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const OnboardingView()),
+        );
       }
     });
   }
