@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:neocare/features/home/home_view.dart';
 import 'package:neocare/core/utils/app_colors.dart';
 import 'package:neocare/features/onboarding/models/onboarding_page_model.dart';
 import 'package:neocare/features/onboarding/widgets/onboarding_action_buttons.dart';
@@ -42,8 +43,14 @@ class _OnboardingViewBodyState extends State<OnboardingViewBody> {
           'Track temperature, humidity, air quality, body temperature, noise levels and more.',
       badges: [
         OnboardingBadgeModel(icon: Icons.videocam_rounded, text: 'Live Camera'),
-        OnboardingBadgeModel(icon: Icons.analytics_rounded, text: 'Sensor Analytics'),
-        OnboardingBadgeModel(icon: Icons.verified_user_rounded, text: 'Smart Monitoring'),
+        OnboardingBadgeModel(
+          icon: Icons.analytics_rounded,
+          text: 'Sensor Analytics',
+        ),
+        OnboardingBadgeModel(
+          icon: Icons.verified_user_rounded,
+          text: 'Smart Monitoring',
+        ),
       ],
     ),
   ];
@@ -64,11 +71,8 @@ class _OnboardingViewBodyState extends State<OnboardingViewBody> {
   }
 
   void _navigateToLogin() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Onboarding Completed! Navigate to Login...'),
-        duration: Duration(seconds: 1),
-      ),
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) => const HomeView()),
     );
   }
 
@@ -108,10 +112,7 @@ class _OnboardingViewBodyState extends State<OnboardingViewBody> {
                 },
                 itemCount: _pages.length,
                 itemBuilder: (context, index) {
-                  return OnboardingPageItem(
-                    page: _pages[index],
-                    index: index,
-                  );
+                  return OnboardingPageItem(page: _pages[index], index: index);
                 },
               ),
             ),
