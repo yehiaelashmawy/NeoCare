@@ -54,6 +54,10 @@ class HomeViewBodyState extends State<HomeViewBody> {
   Future<void> _loadPreferences() async {
     final savedEspIp = await AppPreferences.getEsp32Ip();
     final savedCamUrl = await AppPreferences.getCameraUrl();
+    final alarmVol = await AppPreferences.getAlarmVolume();
+    
+    await _audioPlayer.setVolume(alarmVol);
+    
     if (mounted) {
       setState(() {
         _cameraUrl = savedCamUrl ?? "";

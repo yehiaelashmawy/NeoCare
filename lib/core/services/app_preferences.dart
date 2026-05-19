@@ -56,4 +56,13 @@ class AppPreferences {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keyCameraUrl, url);
   }
+
+  // ─── App Preferences ──────────────────────────────────────────────────────
+  static const String _keyAlarmVolume = 'alarmVolume';
+
+  /// Returns the saved Alarm Volume.
+  static Future<double> getAlarmVolume() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getDouble(_keyAlarmVolume) ?? 0.8;
+  }
 }
