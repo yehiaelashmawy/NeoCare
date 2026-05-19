@@ -36,7 +36,7 @@ class _LiveCameraCardState extends State<LiveCameraCard> {
   @override
   Widget build(BuildContext context) {
     final bool hasLiveStream =
-        widget.isConnected && widget.cameraUrl != null && widget.cameraUrl!.isNotEmpty;
+        widget.cameraUrl != null && widget.cameraUrl!.isNotEmpty;
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     final Color textSecondaryColor =

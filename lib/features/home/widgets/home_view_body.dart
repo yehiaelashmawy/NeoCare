@@ -18,10 +18,14 @@ class HomeViewBody extends StatefulWidget {
   const HomeViewBody({super.key});
 
   @override
-  State<HomeViewBody> createState() => _HomeViewBodyState();
+  State<HomeViewBody> createState() => HomeViewBodyState();
 }
 
-class _HomeViewBodyState extends State<HomeViewBody> {
+class HomeViewBodyState extends State<HomeViewBody> {
+  Future<void> reloadSettings() async {
+    await _loadPreferences();
+  }
+
   // Structured Telemetry State & Services
   TelemetryModel _telemetry = TelemetryModel.initial();
   final TelemetryService _telemetryService = TelemetryService();
@@ -52,15 +56,18 @@ class _HomeViewBodyState extends State<HomeViewBody> {
     final savedCamUrl = await AppPreferences.getCameraUrl();
     if (mounted) {
       setState(() {
-        if (savedCamUrl != null) {
-          _cameraUrl = savedCamUrl;
-        }
-        if (savedEspIp != null) {
-          _esp32Ip = savedEspIp;
-          if (_esp32Ip.isNotEmpty) {
-            _isConnecting = true;
-            _startPolling();
-          }
+        _cameraUrl = savedCamUrl ?? "";
+        _esp32Ip = savedEspIp ?? "";
+
+        if (_esp32Ip.isNotEmpty) {
+          _isConnecting = true;
+          _startPolling();
+        } else {
+          _pollingTimer?.cancel();
+          _isConnected = false;
+          _isConnecting = false;
+          _hasEverConnected = false;
+          _updateAlarmSound();
         }
       });
     }
@@ -435,26 +442,7 @@ class _HomeViewBodyState extends State<HomeViewBody> {
               ),
             ),
           ),
-          Container(
-            decoration: BoxDecoration(
-              color: AppColors.cardBackground,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.black.withOpacity(0.03),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: IconButton(
-              onPressed: _showConnectionDialog,
-              icon: Icon(
-                Icons.settings_rounded,
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ),
+          const SizedBox(width: 48), // Spacer to keep center pill aligned
         ],
       ),
     );
@@ -555,6 +543,7 @@ class _HomeViewBodyState extends State<HomeViewBody> {
                                 progress: _showLiveData ? _telemetry.airQuality / 800 : 0.0,
                                 isDanger: _showLiveData ? _telemetry.airQuality > 500 : false,
                                 isConnected: _isConnected,
+                                progressColor: const Color(0xFF34A853),
                               ),
                             ),
                             const SizedBox(width: 16),
@@ -567,6 +556,7 @@ class _HomeViewBodyState extends State<HomeViewBody> {
                                 progress: _showLiveData ? _telemetry.noise / 100 : 0.0,
                                 isDanger: _showLiveData ? _telemetry.noise > 600 : false,
                                 isConnected: _isConnected,
+                                progressColor: const Color(0xFF34A853),
                               ),
                             ),
                           ],
@@ -674,6 +664,7 @@ class _HomeViewBodyState extends State<HomeViewBody> {
                             progress: _showLiveData ? _telemetry.airQuality / 800 : 0.0,
                             isDanger: _showLiveData ? _telemetry.airQuality > 500 : false,
                             isConnected: _isConnected,
+                            progressColor: const Color(0xFF34A853),
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -686,6 +677,7 @@ class _HomeViewBodyState extends State<HomeViewBody> {
                             progress: _showLiveData ? _telemetry.noise / 100 : 0.0,
                             isDanger: _showLiveData ? _telemetry.noise > 600 : false,
                             isConnected: _isConnected,
+                            progressColor: const Color(0xFF34A853),
                           ),
                         ),
                       ],
@@ -781,6 +773,7 @@ class _HomeViewBodyState extends State<HomeViewBody> {
                   progress: _showLiveData ? _telemetry.airQuality / 800 : 0.0,
                   isDanger: _showLiveData ? _telemetry.airQuality > 500 : false,
                   isConnected: _isConnected,
+                  progressColor: const Color(0xFF34A853),
                 ),
               ),
               const SizedBox(width: 16),
@@ -793,6 +786,7 @@ class _HomeViewBodyState extends State<HomeViewBody> {
                   progress: _showLiveData ? _telemetry.noise / 100 : 0.0,
                   isDanger: _showLiveData ? _telemetry.noise > 600 : false,
                   isConnected: _isConnected,
+                  progressColor: const Color(0xFF34A853),
                 ),
               ),
             ],

@@ -12,6 +12,7 @@ class TelemetryCard extends StatelessWidget {
   final double progress;
   final bool isDanger;
   final bool isConnected;
+  final Color? progressColor;
 
   const TelemetryCard({
     super.key,
@@ -22,6 +23,7 @@ class TelemetryCard extends StatelessWidget {
     required this.progress,
     required this.isDanger,
     required this.isConnected,
+    this.progressColor,
   });
 
   @override
@@ -121,7 +123,9 @@ class TelemetryCard extends StatelessWidget {
               minHeight: 5,
               backgroundColor: const Color(0xFFE9ECEF),
               valueColor: AlwaysStoppedAnimation<Color>(
-                (isConnected && isDanger) ? const Color(0xFFD93025) : AppColors.primary,
+                (isConnected && isDanger)
+                    ? const Color(0xFFD93025)
+                    : (progressColor ?? AppColors.primary),
               ),
             ),
           ),
