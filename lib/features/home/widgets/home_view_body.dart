@@ -172,7 +172,7 @@ class _HomeViewBodyState extends State<HomeViewBody> {
               ),
               const SizedBox(height: 20),
               Text(
-                'Enter your Live Camera Stream IP/URL:',
+                'Enter your Live Camera Stream IP:',
                 style: AppStyles.bodyMedium.copyWith(
                   color: AppColors.textLight,
                 ),
@@ -182,8 +182,8 @@ class _HomeViewBodyState extends State<HomeViewBody> {
                 controller: cameraUrlController,
                 keyboardType: TextInputType.url,
                 decoration: InputDecoration(
-                  hintText: 'e.g. http://192.168.1.9:8080',
-                  labelText: 'Live Camera URL',
+                  hintText: 'e.g. 192.168.1.9:8080',
+                  labelText: 'Camera IP',
                   prefixIcon: const Icon(Icons.videocam_rounded),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),

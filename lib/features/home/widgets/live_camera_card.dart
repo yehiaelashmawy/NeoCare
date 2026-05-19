@@ -36,7 +36,7 @@ class _LiveCameraCardState extends State<LiveCameraCard> {
   @override
   Widget build(BuildContext context) {
     final bool hasLiveStream =
-        widget.cameraUrl != null && widget.cameraUrl!.isNotEmpty;
+        widget.isConnected && widget.cameraUrl != null && widget.cameraUrl!.isNotEmpty;
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     final Color textSecondaryColor =
@@ -325,7 +325,7 @@ class _LiveCameraCardState extends State<LiveCameraCard> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Enter the IP Address or URL of your MJPEG Camera Stream:',
+                'Enter the IP Address of your Live Camera Stream:',
                 style: AppStyles.bodyMedium.copyWith(
                   color: isDark
                       ? AppColors.white.withOpacity(0.7)
@@ -344,14 +344,14 @@ class _LiveCameraCardState extends State<LiveCameraCard> {
                 ),
                 decoration: InputDecoration(
                   hintText: 'e.g. 192.168.1.9:8080',
-                  labelText: 'Camera IP / URL',
+                  labelText: 'Camera IP',
                   labelStyle: TextStyle(
                     color: isDark
                         ? AppColors.white.withOpacity(0.6)
                         : AppColors.textSecondary,
                   ),
                   prefixIcon: const Icon(
-                    Icons.link_rounded,
+                    Icons.settings_ethernet_rounded,
                     color: AppColors.primary,
                   ),
                   filled: true,
@@ -377,7 +377,7 @@ class _LiveCameraCardState extends State<LiveCameraCard> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Note: Both raw IP addresses (e.g. 192.168.1.9:8080) and complete HTTP/HTTPS links are supported.',
+                'Note: Enter only the local IP address (e.g. 192.168.1.9:8080 or 192.168.1.9) of the camera stream.',
                 style: AppStyles.bodyMedium.copyWith(
                   color: isDark
                       ? AppColors.white.withOpacity(0.4)
