@@ -59,7 +59,9 @@ class HomeViewBodyState extends State<HomeViewBody> {
   late final AudioPlayer _audioPlayer;
   bool _isAudioPlaying = false;
 
-  bool get _showLiveData => _isConnected || (_esp32Ip.isNotEmpty && !_isConnecting && _hasEverConnected);
+  bool get _showLiveData =>
+      _isConnected ||
+      (_esp32Ip.isNotEmpty && !_isConnecting && _hasEverConnected);
 
   void _notifyListeners() {
     widget.connectionNotifier.value = _isConnected;
@@ -88,9 +90,9 @@ class HomeViewBodyState extends State<HomeViewBody> {
     final savedEspIp = await AppPreferences.getEsp32Ip();
     final savedCamUrl = await AppPreferences.getCameraUrl();
     final alarmVol = await AppPreferences.getAlarmVolume();
-    
+
     await _audioPlayer.setVolume(alarmVol);
-    
+
     if (mounted) {
       setState(() {
         _cameraUrl = savedCamUrl ?? "";
@@ -175,7 +177,9 @@ class HomeViewBodyState extends State<HomeViewBody> {
       if (!url.startsWith('http')) {
         url = 'http://$url';
       }
-      final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 2));
+      final response = await http
+          .get(Uri.parse(url))
+          .timeout(const Duration(seconds: 2));
       widget.cameraConnectedNotifier.value = response.statusCode == 200;
     } catch (_) {
       widget.cameraConnectedNotifier.value = false;
@@ -353,8 +357,6 @@ class HomeViewBodyState extends State<HomeViewBody> {
     );
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -445,12 +447,11 @@ class HomeViewBodyState extends State<HomeViewBody> {
                 ),
               ],
             ),
-            child: IconButton(
-              onPressed: () {},
-              icon: const Icon(
-                Icons.assignment_ind_rounded,
-                color: AppColors.primary,
-              ),
+            child: Image.asset(
+              'assets/images/app_logo.png',
+              height: 32,
+              width: 32,
+              fit: BoxFit.contain,
             ),
           ),
           GestureDetector(
@@ -584,12 +585,17 @@ class HomeViewBodyState extends State<HomeViewBody> {
                             Expanded(
                               child: TelemetryCard(
                                 title: 'Room Temp',
-                                value: _showLiveData ? '${_telemetry.airTemp} °C' : '--',
+                                value: _showLiveData
+                                    ? '${_telemetry.airTemp} °C'
+                                    : '--',
                                 subtitle: 'Room Temp (25-37)',
                                 icon: Icons.thermostat_rounded,
-                                progress: _showLiveData ? (_telemetry.airTemp - 20) / (40 - 20) : 0.0,
+                                progress: _showLiveData
+                                    ? (_telemetry.airTemp - 20) / (40 - 20)
+                                    : 0.0,
                                 isDanger: _showLiveData
-                                    ? (_telemetry.airTemp < 25.0 || _telemetry.airTemp > 37.0)
+                                    ? (_telemetry.airTemp < 25.0 ||
+                                          _telemetry.airTemp > 37.0)
                                     : false,
                                 isConnected: _isConnected,
                                 isConnecting: _isConnecting,
@@ -600,12 +606,17 @@ class HomeViewBodyState extends State<HomeViewBody> {
                             Expanded(
                               child: TelemetryCard(
                                 title: 'Humidity',
-                                value: _showLiveData ? '${_telemetry.humidity} %' : '--',
+                                value: _showLiveData
+                                    ? '${_telemetry.humidity} %'
+                                    : '--',
                                 subtitle: 'Humidity (50-70)',
                                 icon: Icons.water_drop_rounded,
-                                progress: _showLiveData ? (_telemetry.humidity - 30) / (90 - 30) : 0.0,
+                                progress: _showLiveData
+                                    ? (_telemetry.humidity - 30) / (90 - 30)
+                                    : 0.0,
                                 isDanger: _showLiveData
-                                    ? (_telemetry.humidity < 50.0 || _telemetry.humidity > 70.0)
+                                    ? (_telemetry.humidity < 50.0 ||
+                                          _telemetry.humidity > 70.0)
                                     : false,
                                 isConnected: _isConnected,
                                 isConnecting: _isConnecting,
@@ -620,11 +631,17 @@ class HomeViewBodyState extends State<HomeViewBody> {
                             Expanded(
                               child: TelemetryCard(
                                 title: 'Air Quality',
-                                value: _showLiveData ? '${_telemetry.airQuality}' : '--',
+                                value: _showLiveData
+                                    ? '${_telemetry.airQuality}'
+                                    : '--',
                                 subtitle: 'Air Quality (<500)',
                                 icon: Icons.air_rounded,
-                                progress: _showLiveData ? _telemetry.airQuality / 800 : 0.0,
-                                isDanger: _showLiveData ? _telemetry.airQuality > 500 : false,
+                                progress: _showLiveData
+                                    ? _telemetry.airQuality / 800
+                                    : 0.0,
+                                isDanger: _showLiveData
+                                    ? _telemetry.airQuality > 500
+                                    : false,
                                 isConnected: _isConnected,
                                 isConnecting: _isConnecting,
                                 isConfigured: _esp32Ip.isNotEmpty,
@@ -635,11 +652,17 @@ class HomeViewBodyState extends State<HomeViewBody> {
                             Expanded(
                               child: TelemetryCard(
                                 title: 'Noise',
-                                value: _showLiveData ? '${_telemetry.noise} dB' : '--',
+                                value: _showLiveData
+                                    ? '${_telemetry.noise} dB'
+                                    : '--',
                                 subtitle: 'Noise (<600)',
                                 icon: Icons.graphic_eq_rounded,
-                                progress: _showLiveData ? _telemetry.noise / 100 : 0.0,
-                                isDanger: _showLiveData ? _telemetry.noise > 600 : false,
+                                progress: _showLiveData
+                                    ? _telemetry.noise / 100
+                                    : 0.0,
+                                isDanger: _showLiveData
+                                    ? _telemetry.noise > 600
+                                    : false,
                                 isConnected: _isConnected,
                                 isConnecting: _isConnecting,
                                 isConfigured: _esp32Ip.isNotEmpty,
@@ -715,12 +738,17 @@ class HomeViewBodyState extends State<HomeViewBody> {
                         Expanded(
                           child: TelemetryCard(
                             title: 'Room Temp',
-                            value: _showLiveData ? '${_telemetry.airTemp} °C' : '--',
+                            value: _showLiveData
+                                ? '${_telemetry.airTemp} °C'
+                                : '--',
                             subtitle: 'Room Temp (25-37)',
                             icon: Icons.thermostat_rounded,
-                            progress: _showLiveData ? (_telemetry.airTemp - 20) / (40 - 20) : 0.0,
+                            progress: _showLiveData
+                                ? (_telemetry.airTemp - 20) / (40 - 20)
+                                : 0.0,
                             isDanger: _showLiveData
-                                ? (_telemetry.airTemp < 25.0 || _telemetry.airTemp > 37.0)
+                                ? (_telemetry.airTemp < 25.0 ||
+                                      _telemetry.airTemp > 37.0)
                                 : false,
                             isConnected: _isConnected,
                             isConnecting: _isConnecting,
@@ -731,12 +759,17 @@ class HomeViewBodyState extends State<HomeViewBody> {
                         Expanded(
                           child: TelemetryCard(
                             title: 'Humidity',
-                            value: _showLiveData ? '${_telemetry.humidity} %' : '--',
+                            value: _showLiveData
+                                ? '${_telemetry.humidity} %'
+                                : '--',
                             subtitle: 'Humidity (50-70)',
                             icon: Icons.water_drop_rounded,
-                            progress: _showLiveData ? (_telemetry.humidity - 30) / (90 - 30) : 0.0,
+                            progress: _showLiveData
+                                ? (_telemetry.humidity - 30) / (90 - 30)
+                                : 0.0,
                             isDanger: _showLiveData
-                                ? (_telemetry.humidity < 50.0 || _telemetry.humidity > 70.0)
+                                ? (_telemetry.humidity < 50.0 ||
+                                      _telemetry.humidity > 70.0)
                                 : false,
                             isConnected: _isConnected,
                             isConnecting: _isConnecting,
@@ -751,11 +784,17 @@ class HomeViewBodyState extends State<HomeViewBody> {
                         Expanded(
                           child: TelemetryCard(
                             title: 'Air Quality',
-                            value: _showLiveData ? '${_telemetry.airQuality}' : '--',
+                            value: _showLiveData
+                                ? '${_telemetry.airQuality}'
+                                : '--',
                             subtitle: 'Air Quality (<500)',
                             icon: Icons.air_rounded,
-                            progress: _showLiveData ? _telemetry.airQuality / 800 : 0.0,
-                            isDanger: _showLiveData ? _telemetry.airQuality > 500 : false,
+                            progress: _showLiveData
+                                ? _telemetry.airQuality / 800
+                                : 0.0,
+                            isDanger: _showLiveData
+                                ? _telemetry.airQuality > 500
+                                : false,
                             isConnected: _isConnected,
                             isConnecting: _isConnecting,
                             isConfigured: _esp32Ip.isNotEmpty,
@@ -766,11 +805,17 @@ class HomeViewBodyState extends State<HomeViewBody> {
                         Expanded(
                           child: TelemetryCard(
                             title: 'Noise',
-                            value: _showLiveData ? '${_telemetry.noise} dB' : '--',
+                            value: _showLiveData
+                                ? '${_telemetry.noise} dB'
+                                : '--',
                             subtitle: 'Noise (<600)',
                             icon: Icons.graphic_eq_rounded,
-                            progress: _showLiveData ? _telemetry.noise / 100 : 0.0,
-                            isDanger: _showLiveData ? _telemetry.noise > 600 : false,
+                            progress: _showLiveData
+                                ? _telemetry.noise / 100
+                                : 0.0,
+                            isDanger: _showLiveData
+                                ? _telemetry.noise > 600
+                                : false,
                             isConnected: _isConnected,
                             isConnecting: _isConnecting,
                             isConfigured: _esp32Ip.isNotEmpty,
@@ -830,7 +875,9 @@ class HomeViewBodyState extends State<HomeViewBody> {
                   value: _showLiveData ? '${_telemetry.airTemp} °C' : '--',
                   subtitle: 'Room Temp (25-37)',
                   icon: Icons.thermostat_rounded,
-                  progress: _showLiveData ? (_telemetry.airTemp - 20) / (40 - 20) : 0.0,
+                  progress: _showLiveData
+                      ? (_telemetry.airTemp - 20) / (40 - 20)
+                      : 0.0,
                   isDanger: _showLiveData
                       ? (_telemetry.airTemp < 25.0 || _telemetry.airTemp > 37.0)
                       : false,
@@ -846,9 +893,12 @@ class HomeViewBodyState extends State<HomeViewBody> {
                   value: _showLiveData ? '${_telemetry.humidity} %' : '--',
                   subtitle: 'Humidity (50-70)',
                   icon: Icons.water_drop_rounded,
-                  progress: _showLiveData ? (_telemetry.humidity - 30) / (90 - 30) : 0.0,
+                  progress: _showLiveData
+                      ? (_telemetry.humidity - 30) / (90 - 30)
+                      : 0.0,
                   isDanger: _showLiveData
-                      ? (_telemetry.humidity < 50.0 || _telemetry.humidity > 70.0)
+                      ? (_telemetry.humidity < 50.0 ||
+                            _telemetry.humidity > 70.0)
                       : false,
                   isConnected: _isConnected,
                   isConnecting: _isConnecting,

@@ -177,7 +177,7 @@ class SettingsPillIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color bgColor = color.withOpacity(isDark ? 0.2 : 0.12);
+    final Color bgColor = color.withOpacity(0.2);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(

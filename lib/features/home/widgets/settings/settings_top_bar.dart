@@ -7,6 +7,7 @@ class SettingsTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
       child: Row(
@@ -18,22 +19,23 @@ class SettingsTopBar extends StatelessWidget {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.black.withValues(alpha: 0.03),
+                  color: isDark
+                      ? AppColors.black.withValues(alpha: 0.07)
+                      : AppColors.black.withValues(alpha: 0.03),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
               ],
             ),
-            child: IconButton(
-              onPressed: () {},
-              icon: const Icon(
-                Icons.assignment_ind_rounded,
-                color: AppColors.primary,
-              ),
+            child: Image.asset(
+              'assets/images/app_logo.png',
+              height: 32,
+              width: 32,
+              fit: BoxFit.contain,
             ),
           ),
           Text(
-            'INC-0824',
+            '',
             style: AppStyles.headingMedium.copyWith(
               fontSize: 16,
               fontWeight: FontWeight.bold,

@@ -11,6 +11,7 @@ import 'package:neocare/core/utils/app_styles.dart';
 import 'package:neocare/features/home/widgets/settings/settings_components.dart';
 import 'package:neocare/features/home/widgets/settings/settings_top_bar.dart';
 import 'package:neocare/features/home/widgets/settings/alarm_volume_row.dart';
+import 'package:neocare/features/home/widgets/about_view.dart';
 
 class SettingsView extends StatefulWidget {
   final VoidCallback onSettingsSaved;
@@ -509,7 +510,15 @@ class _SettingsViewState extends State<SettingsView> {
                                 ? const Color(0xFFD1D5DB)
                                 : const Color(0xFF475569),
                             title: 'About Project',
-                            subtitle: 'Version 2.4.1 • Team Members',
+                            subtitle: 'Version 1.0.0 ',
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const AboutView(),
+                                ),
+                              );
+                            },
                             trailing: Icon(
                               Icons.chevron_right_rounded,
                               color: isDark

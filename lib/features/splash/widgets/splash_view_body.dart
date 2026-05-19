@@ -122,12 +122,10 @@ class _SplashViewBodyState extends State<SplashViewBody>
               },
               child: Image.asset(
                 'assets/images/app_logo.png',
-                height: 160,
-                width: 160,
+
                 fit: BoxFit.contain,
               ),
             ),
-            const SizedBox(height: 28),
 
             // Animated App Name and Subtitle
             AnimatedBuilder(
@@ -141,15 +139,9 @@ class _SplashViewBodyState extends State<SplashViewBody>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    'NeoCare',
-                    style: AppStyles.brandTitle,
-                  ),
+                  Text('NeoCare', style: AppStyles.brandTitle),
                   const SizedBox(height: 8),
-                  Text(
-                    'Smart Monitoring System',
-                    style: AppStyles.subtitle,
-                  ),
+                  Text('Smart Monitoring System', style: AppStyles.subtitle),
                 ],
               ),
             ),
