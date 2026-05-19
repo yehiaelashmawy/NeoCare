@@ -28,22 +28,23 @@ class _HomeViewBodyState extends State<HomeViewBody> {
 
   // Networking variables
   String _esp32Ip = "";
-  String _cameraUrl = "http://192.168.1.9:8080";
+  String _cameraUrl = "";
   bool _isConnected = false;
   bool _isConnecting = false;
+  bool _hasEverConnected = false;
   Timer? _pollingTimer;
   Timer? _simulationTimer;
 
   late final AudioPlayer _audioPlayer;
   bool _isAudioPlaying = false;
 
+  bool get _showLiveData => _isConnected || (_esp32Ip.isNotEmpty && !_isConnecting && _hasEverConnected);
+
   @override
   void initState() {
     super.initState();
     _audioPlayer = AudioPlayer();
     _loadPreferences();
-    // Default to simulation mode until ESP32 IP is supplied
-    _startSimulation();
   }
 
   Future<void> _loadPreferences() async {
@@ -70,10 +71,8 @@ class _HomeViewBodyState extends State<HomeViewBody> {
     _pollingTimer?.cancel();
     _simulationTimer?.cancel();
 
-    double factor = 0.0;
     _pollingTimer = Timer.periodic(const Duration(seconds: 2), (timer) async {
       if (_esp32Ip.isEmpty) return;
-      factor += 0.2;
 
       try {
         final telemetryData = await _telemetryService.fetchTelemetry(_esp32Ip);
@@ -82,34 +81,25 @@ class _HomeViewBodyState extends State<HomeViewBody> {
             _telemetry = telemetryData;
             _isConnected = true;
             _isConnecting = false;
+            _hasEverConnected = true;
           });
           _updateAlarmSound();
         }
       } catch (e) {
-        // If fetch fails, fallback to simulation
+        // If fetch fails, update connection states but keep last reads in telemetry
         if (mounted) {
           setState(() {
             _isConnected = false;
             _isConnecting = false;
           });
-          _applySimulatedTick(factor);
+          _updateAlarmSound();
         }
       }
     });
   }
 
-  // Helper method so both simulation timer and network fallback loops can use it!
-  void _applySimulatedTick(double factor) {
-    if (mounted) {
-      setState(() {
-        _telemetry = TelemetryModel.generateSimulated(factor);
-      });
-      _updateAlarmSound();
-    }
-  }
-
   void _updateAlarmSound() async {
-    if (_telemetry.isDanger) {
+    if (_isConnected && _telemetry.isDanger) {
       if (!_isAudioPlaying) {
         _isAudioPlaying = true;
         try {
@@ -129,19 +119,6 @@ class _HomeViewBodyState extends State<HomeViewBody> {
         }
       }
     }
-  }
-
-  // Fallback high-fidelity simulator
-  void _startSimulation() {
-    _pollingTimer?.cancel();
-    _simulationTimer?.cancel();
-
-    double factor = 0.0;
-    _simulationTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) return;
-      factor += 0.1;
-      _applySimulatedTick(factor);
-    });
   }
 
   // Display beautiful dialog to connect real-time ESP32 local server
@@ -220,13 +197,17 @@ class _HomeViewBodyState extends State<HomeViewBody> {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              _startSimulation();
+              _pollingTimer?.cancel();
+              _simulationTimer?.cancel();
               setState(() {
                 _esp32Ip = "";
                 _cameraUrl = "";
                 _isConnected = false;
                 _isConnecting = false;
+                _hasEverConnected = false;
+                _telemetry = TelemetryModel.initial();
               });
+              _updateAlarmSound();
               AppPreferences.setEsp32Ip("");
               AppPreferences.setCameraUrl("");
             },
@@ -247,6 +228,7 @@ class _HomeViewBodyState extends State<HomeViewBody> {
                 setState(() {
                   _esp32Ip = newIp;
                   _isConnecting = true;
+                  _hasEverConnected = false;
                 });
                 AppPreferences.setEsp32Ip(newIp);
                 _startPolling();
@@ -255,9 +237,13 @@ class _HomeViewBodyState extends State<HomeViewBody> {
                   _esp32Ip = "";
                   _isConnected = false;
                   _isConnecting = false;
+                  _hasEverConnected = false;
+                  _telemetry = TelemetryModel.initial();
                 });
+                _pollingTimer?.cancel();
+                _simulationTimer?.cancel();
+                _updateAlarmSound();
                 AppPreferences.setEsp32Ip("");
-                _startSimulation();
               }
               Navigator.pop(context);
             },
@@ -477,105 +463,126 @@ class _HomeViewBodyState extends State<HomeViewBody> {
   Widget _buildLargeTabletLayout() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
         children: [
-          // Left side: Camera and Baby Temp
+          if (!_isConnected && _esp32Ip.isNotEmpty) ...[
+            _buildWarningBanner(),
+            const SizedBox(height: 16),
+          ],
           Expanded(
-            flex: 5,
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Column(
-                children: [
-                  LiveCameraCard(
-                    isTablet: true,
-                    isDanger: _telemetry.isDanger,
-                    statusMessage: _telemetry.statusMessage,
-                    cameraUrl: _cameraUrl,
-                    onCameraUrlChanged: (newUrl) {
-                      setState(() {
-                        _cameraUrl = newUrl;
-                      });
-                      AppPreferences.setCameraUrl(newUrl);
-                    },
-                  ),
-                  const SizedBox(height: 24),
-                  BabyTempCard(
-                    babyTemp: _telemetry.babyTemp,
-                    isDanger: _telemetry.isDanger,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(width: 24),
-          // Right side: Telemetry Grid
-          Expanded(
-            flex: 4,
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TelemetryCard(
-                          title: 'Room Temp',
-                          value: '${_telemetry.airTemp} °C',
-                          subtitle: 'Room Temp (25-37)',
-                          icon: Icons.thermostat_rounded,
-                          progress: (_telemetry.airTemp - 20) / (40 - 20),
-                          isDanger:
-                              _telemetry.airTemp < 25.0 ||
-                              _telemetry.airTemp > 37.0,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Left side: Camera and Baby Temp
+                Expanded(
+                  flex: 5,
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      children: [
+                        LiveCameraCard(
+                          isTablet: true,
+                          isDanger: _telemetry.isDanger,
+                          statusMessage: _telemetry.statusMessage,
+                          cameraUrl: _cameraUrl,
+                          onCameraUrlChanged: (newUrl) {
+                            setState(() {
+                              _cameraUrl = newUrl;
+                            });
+                            AppPreferences.setCameraUrl(newUrl);
+                          },
+                          isConnected: _isConnected,
                         ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: TelemetryCard(
-                          title: 'Humidity',
-                          value: '${_telemetry.humidity} %',
-                          subtitle: 'Humidity (50-70)',
-                          icon: Icons.water_drop_rounded,
-                          progress: (_telemetry.humidity - 30) / (90 - 30),
-                          isDanger:
-                              _telemetry.humidity < 50.0 ||
-                              _telemetry.humidity > 70.0,
+                        const SizedBox(height: 24),
+                        BabyTempCard(
+                          babyTemp: _telemetry.babyTemp,
+                          isDanger: _isConnected ? _telemetry.isDanger : false,
+                          isConnected: _isConnected,
+                          showValue: _showLiveData,
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TelemetryCard(
-                          title: 'Air Quality',
-                          value: '${_telemetry.airQuality}',
-                          subtitle: 'Air Quality (<500)',
-                          icon: Icons.air_rounded,
-                          progress: _telemetry.airQuality / 800,
-                          isDanger: _telemetry.airQuality > 500,
+                ),
+                const SizedBox(width: 24),
+                // Right side: Telemetry Grid
+                Expanded(
+                  flex: 4,
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TelemetryCard(
+                                title: 'Room Temp',
+                                value: _showLiveData ? '${_telemetry.airTemp} °C' : '--',
+                                subtitle: 'Room Temp (25-37)',
+                                icon: Icons.thermostat_rounded,
+                                progress: _showLiveData ? (_telemetry.airTemp - 20) / (40 - 20) : 0.0,
+                                isDanger: _showLiveData
+                                    ? (_telemetry.airTemp < 25.0 || _telemetry.airTemp > 37.0)
+                                    : false,
+                                isConnected: _isConnected,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: TelemetryCard(
+                                title: 'Humidity',
+                                value: _showLiveData ? '${_telemetry.humidity} %' : '--',
+                                subtitle: 'Humidity (50-70)',
+                                icon: Icons.water_drop_rounded,
+                                progress: _showLiveData ? (_telemetry.humidity - 30) / (90 - 30) : 0.0,
+                                isDanger: _showLiveData
+                                    ? (_telemetry.humidity < 50.0 || _telemetry.humidity > 70.0)
+                                    : false,
+                                isConnected: _isConnected,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: TelemetryCard(
-                          title: 'Noise',
-                          value: '${_telemetry.noise} dB',
-                          subtitle: 'Noise (<600)',
-                          icon: Icons.graphic_eq_rounded,
-                          progress: _telemetry.noise / 100,
-                          isDanger: _telemetry.noise > 600,
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TelemetryCard(
+                                title: 'Air Quality',
+                                value: _showLiveData ? '${_telemetry.airQuality}' : '--',
+                                subtitle: 'Air Quality (<500)',
+                                icon: Icons.air_rounded,
+                                progress: _showLiveData ? _telemetry.airQuality / 800 : 0.0,
+                                isDanger: _showLiveData ? _telemetry.airQuality > 500 : false,
+                                isConnected: _isConnected,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: TelemetryCard(
+                                title: 'Noise',
+                                value: _showLiveData ? '${_telemetry.noise} dB' : '--',
+                                subtitle: 'Noise (<600)',
+                                icon: Icons.graphic_eq_rounded,
+                                progress: _showLiveData ? _telemetry.noise / 100 : 0.0,
+                                isDanger: _showLiveData ? _telemetry.noise > 600 : false,
+                                isConnected: _isConnected,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 16),
+                        WeightCard(
+                          weight: _telemetry.weight,
+                          isConnected: _isConnected,
+                          showValue: _showLiveData,
+                        ),
+                        const SizedBox(height: 32),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 16),
-                  WeightCard(weight: _telemetry.weight),
-                  const SizedBox(height: 32),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ],
@@ -589,6 +596,10 @@ class _HomeViewBodyState extends State<HomeViewBody> {
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
       child: Column(
         children: [
+          if (!_isConnected && _esp32Ip.isNotEmpty) ...[
+            _buildWarningBanner(),
+            const SizedBox(height: 16),
+          ],
           LiveCameraCard(
             isTablet: true,
             isDanger: _telemetry.isDanger,
@@ -600,6 +611,7 @@ class _HomeViewBodyState extends State<HomeViewBody> {
               });
               AppPreferences.setCameraUrl(newUrl);
             },
+            isConnected: _isConnected,
           ),
           const SizedBox(height: 24),
           Row(
@@ -609,7 +621,9 @@ class _HomeViewBodyState extends State<HomeViewBody> {
                 flex: 1,
                 child: BabyTempCard(
                   babyTemp: _telemetry.babyTemp,
-                  isDanger: _telemetry.isDanger,
+                  isDanger: _isConnected ? _telemetry.isDanger : false,
+                  isConnected: _isConnected,
+                  showValue: _showLiveData,
                 ),
               ),
               const SizedBox(width: 16),
@@ -622,26 +636,28 @@ class _HomeViewBodyState extends State<HomeViewBody> {
                         Expanded(
                           child: TelemetryCard(
                             title: 'Room Temp',
-                            value: '${_telemetry.airTemp} °C',
+                            value: _showLiveData ? '${_telemetry.airTemp} °C' : '--',
                             subtitle: 'Room Temp (25-37)',
                             icon: Icons.thermostat_rounded,
-                            progress: (_telemetry.airTemp - 20) / (40 - 20),
-                            isDanger:
-                                _telemetry.airTemp < 25.0 ||
-                                _telemetry.airTemp > 37.0,
+                            progress: _showLiveData ? (_telemetry.airTemp - 20) / (40 - 20) : 0.0,
+                            isDanger: _showLiveData
+                                ? (_telemetry.airTemp < 25.0 || _telemetry.airTemp > 37.0)
+                                : false,
+                            isConnected: _isConnected,
                           ),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
                           child: TelemetryCard(
                             title: 'Humidity',
-                            value: '${_telemetry.humidity} %',
+                            value: _showLiveData ? '${_telemetry.humidity} %' : '--',
                             subtitle: 'Humidity (50-70)',
                             icon: Icons.water_drop_rounded,
-                            progress: (_telemetry.humidity - 30) / (90 - 30),
-                            isDanger:
-                                _telemetry.humidity < 50.0 ||
-                                _telemetry.humidity > 70.0,
+                            progress: _showLiveData ? (_telemetry.humidity - 30) / (90 - 30) : 0.0,
+                            isDanger: _showLiveData
+                                ? (_telemetry.humidity < 50.0 || _telemetry.humidity > 70.0)
+                                : false,
+                            isConnected: _isConnected,
                           ),
                         ),
                       ],
@@ -652,22 +668,24 @@ class _HomeViewBodyState extends State<HomeViewBody> {
                         Expanded(
                           child: TelemetryCard(
                             title: 'Air Quality',
-                            value: '${_telemetry.airQuality}',
+                            value: _showLiveData ? '${_telemetry.airQuality}' : '--',
                             subtitle: 'Air Quality (<500)',
                             icon: Icons.air_rounded,
-                            progress: _telemetry.airQuality / 800,
-                            isDanger: _telemetry.airQuality > 500,
+                            progress: _showLiveData ? _telemetry.airQuality / 800 : 0.0,
+                            isDanger: _showLiveData ? _telemetry.airQuality > 500 : false,
+                            isConnected: _isConnected,
                           ),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
                           child: TelemetryCard(
                             title: 'Noise',
-                            value: '${_telemetry.noise} dB',
-                            subtitle: 'Noise (<60)',
+                            value: _showLiveData ? '${_telemetry.noise} dB' : '--',
+                            subtitle: 'Noise (<600)',
                             icon: Icons.graphic_eq_rounded,
-                            progress: _telemetry.noise / 100,
-                            isDanger: _telemetry.noise > 600,
+                            progress: _showLiveData ? _telemetry.noise / 100 : 0.0,
+                            isDanger: _showLiveData ? _telemetry.noise > 600 : false,
+                            isConnected: _isConnected,
                           ),
                         ),
                       ],
@@ -678,7 +696,11 @@ class _HomeViewBodyState extends State<HomeViewBody> {
             ],
           ),
           const SizedBox(height: 16),
-          WeightCard(weight: _telemetry.weight),
+          WeightCard(
+            weight: _telemetry.weight,
+            isConnected: _isConnected,
+            showValue: _showLiveData,
+          ),
           const SizedBox(height: 32),
         ],
       ),
@@ -691,6 +713,10 @@ class _HomeViewBodyState extends State<HomeViewBody> {
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: Column(
         children: [
+          if (!_isConnected && _esp32Ip.isNotEmpty) ...[
+            _buildWarningBanner(),
+            const SizedBox(height: 16),
+          ],
           LiveCameraCard(
             isTablet: false,
             isDanger: _telemetry.isDanger,
@@ -702,6 +728,7 @@ class _HomeViewBodyState extends State<HomeViewBody> {
               });
               AppPreferences.setCameraUrl(newUrl);
             },
+            isConnected: _isConnected,
           ),
           const SizedBox(height: 20),
           Row(
@@ -709,24 +736,28 @@ class _HomeViewBodyState extends State<HomeViewBody> {
               Expanded(
                 child: TelemetryCard(
                   title: 'Room Temp',
-                  value: '${_telemetry.airTemp} °C',
+                  value: _showLiveData ? '${_telemetry.airTemp} °C' : '--',
                   subtitle: 'Room Temp (25-37)',
                   icon: Icons.thermostat_rounded,
-                  progress: (_telemetry.airTemp - 20) / (40 - 20),
-                  isDanger:
-                      _telemetry.airTemp < 25.0 || _telemetry.airTemp > 37.0,
+                  progress: _showLiveData ? (_telemetry.airTemp - 20) / (40 - 20) : 0.0,
+                  isDanger: _showLiveData
+                      ? (_telemetry.airTemp < 25.0 || _telemetry.airTemp > 37.0)
+                      : false,
+                  isConnected: _isConnected,
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: TelemetryCard(
                   title: 'Humidity',
-                  value: '${_telemetry.humidity} %',
+                  value: _showLiveData ? '${_telemetry.humidity} %' : '--',
                   subtitle: 'Humidity (50-70)',
                   icon: Icons.water_drop_rounded,
-                  progress: (_telemetry.humidity - 30) / (90 - 30),
-                  isDanger:
-                      _telemetry.humidity < 50.0 || _telemetry.humidity > 70.0,
+                  progress: _showLiveData ? (_telemetry.humidity - 30) / (90 - 30) : 0.0,
+                  isDanger: _showLiveData
+                      ? (_telemetry.humidity < 50.0 || _telemetry.humidity > 70.0)
+                      : false,
+                  isConnected: _isConnected,
                 ),
               ),
             ],
@@ -734,7 +765,9 @@ class _HomeViewBodyState extends State<HomeViewBody> {
           const SizedBox(height: 16),
           BabyTempCard(
             babyTemp: _telemetry.babyTemp,
-            isDanger: _telemetry.isDanger,
+            isDanger: _isConnected ? _telemetry.isDanger : false,
+            isConnected: _isConnected,
+            showValue: _showLiveData,
           ),
           const SizedBox(height: 16),
           Row(
@@ -742,29 +775,71 @@ class _HomeViewBodyState extends State<HomeViewBody> {
               Expanded(
                 child: TelemetryCard(
                   title: 'Air Quality',
-                  value: '${_telemetry.airQuality}',
+                  value: _showLiveData ? '${_telemetry.airQuality}' : '--',
                   subtitle: 'Air Quality (<500)',
                   icon: Icons.air_rounded,
-                  progress: _telemetry.airQuality / 800,
-                  isDanger: _telemetry.airQuality > 500,
+                  progress: _showLiveData ? _telemetry.airQuality / 800 : 0.0,
+                  isDanger: _showLiveData ? _telemetry.airQuality > 500 : false,
+                  isConnected: _isConnected,
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: TelemetryCard(
                   title: 'Noise',
-                  value: '${_telemetry.noise} dB',
-                  subtitle: 'Noise (<60)',
+                  value: _showLiveData ? '${_telemetry.noise} dB' : '--',
+                  subtitle: 'Noise (<600)',
                   icon: Icons.graphic_eq_rounded,
-                  progress: _telemetry.noise / 100,
-                  isDanger: _telemetry.noise > 600,
+                  progress: _showLiveData ? _telemetry.noise / 100 : 0.0,
+                  isDanger: _showLiveData ? _telemetry.noise > 600 : false,
+                  isConnected: _isConnected,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          WeightCard(weight: _telemetry.weight),
+          WeightCard(
+            weight: _telemetry.weight,
+            isConnected: _isConnected,
+            showValue: _showLiveData,
+          ),
           const SizedBox(height: 32),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWarningBanner() {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color warningBg = isDark
+        ? const Color(0xFF664D03).withOpacity(0.4)
+        : const Color(0xFFFEF7E0);
+    final Color warningBorder = isDark
+        ? const Color(0xFF664D03)
+        : const Color(0xFFFBBC05).withOpacity(0.3);
+    final Color warningText = isDark
+        ? const Color(0xFFFFDA6A)
+        : const Color(0xFFB06000);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: warningBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: warningBorder),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              "⚠️ Connection lost — showing last known data",
+              style: AppStyles.bodyMedium.copyWith(
+                color: warningText,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
         ],
       ),
     );

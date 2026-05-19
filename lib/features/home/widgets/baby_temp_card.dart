@@ -7,11 +7,15 @@ import 'package:neocare/core/utils/app_styles.dart';
 class BabyTempCard extends StatelessWidget {
   final double babyTemp;
   final bool isDanger;
+  final bool isConnected;
+  final bool showValue;
 
   const BabyTempCard({
     super.key,
     required this.babyTemp,
     required this.isDanger,
+    required this.isConnected,
+    required this.showValue,
   });
 
   @override
@@ -23,7 +27,9 @@ class BabyTempCard extends StatelessWidget {
         color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: isDanger ? const Color(0xFFD93025).withOpacity(0.25) : Colors.transparent,
+          color: isConnected && isDanger
+              ? const Color(0xFFD93025).withOpacity(0.25)
+              : Colors.transparent,
           width: 1.5,
         ),
         boxShadow: [
@@ -69,23 +75,33 @@ class BabyTempCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: isDanger ? const Color(0xFFFCE8E6) : const Color(0xFFE6F4EA),
+                  color: isConnected
+                      ? (isDanger ? const Color(0xFFFCE8E6) : const Color(0xFFE6F4EA))
+                      : (AppColors.isDark ? const Color(0xFF374151) : const Color(0xFFF1F3F4)),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
                   children: [
                     Icon(
-                      isDanger ? Icons.warning_amber_rounded : Icons.check_circle_rounded,
+                      isConnected
+                          ? (isDanger ? Icons.warning_amber_rounded : Icons.check_circle_rounded)
+                          : Icons.remove_rounded,
                       size: 11,
-                      color: isDanger ? const Color(0xFFD93025) : const Color(0xFF137333),
+                      color: isConnected
+                          ? (isDanger ? const Color(0xFFD93025) : const Color(0xFF137333))
+                          : AppColors.textLight,
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      isDanger ? 'Critical' : 'Safe',
+                      isConnected
+                          ? (isDanger ? 'Critical' : 'Safe')
+                          : 'No Signal',
                       style: AppStyles.bodyMedium.copyWith(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
-                        color: isDanger ? const Color(0xFFD93025) : const Color(0xFF137333),
+                        color: isConnected
+                            ? (isDanger ? const Color(0xFFD93025) : const Color(0xFF137333))
+                            : AppColors.textLight,
                       ),
                     ),
                   ],
@@ -101,11 +117,13 @@ class BabyTempCard extends StatelessWidget {
             textBaseline: TextBaseline.alphabetic,
             children: [
               Text(
-                '$babyTemp',
+                showValue ? '$babyTemp' : '--',
                 style: AppStyles.headingLarge.copyWith(
                   fontSize: 48,
                   fontWeight: FontWeight.bold,
-                  color: isDanger ? const Color(0xFFD93025) : AppColors.textPrimary,
+                  color: isConnected
+                      ? (isDanger ? const Color(0xFFD93025) : AppColors.textPrimary)
+                      : (showValue ? AppColors.textPrimary : AppColors.textLight),
                 ),
               ),
               const SizedBox(width: 4),
@@ -114,7 +132,9 @@ class BabyTempCard extends StatelessWidget {
                 style: AppStyles.subtitle.copyWith(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: isDanger ? const Color(0xFFD93025) : AppColors.textSecondary,
+                  color: isConnected
+                      ? (isDanger ? const Color(0xFFD93025) : AppColors.textSecondary)
+                      : (showValue ? AppColors.textSecondary : AppColors.textLight),
                 ),
               ),
             ],
@@ -140,11 +160,13 @@ class BabyTempCard extends StatelessWidget {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(4),
                   child: LinearProgressIndicator(
-                    value: ((babyTemp - 35) / (38 - 35)).clamp(0.0, 1.0),
+                    value: showValue ? ((babyTemp - 35) / (38 - 35)).clamp(0.0, 1.0) : 0.0,
                     minHeight: 6,
-                    backgroundColor: const Color(0xFFE9ECEF),
+                    backgroundColor: showValue ? const Color(0xFFE9ECEF) : (AppColors.isDark ? const Color(0xFF374151) : Colors.grey.shade300),
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      isDanger ? const Color(0xFFD93025) : const Color(0xFF34A853),
+                      isConnected
+                          ? (isDanger ? const Color(0xFFD93025) : const Color(0xFF34A853))
+                          : (showValue ? const Color(0xFF34A853) : Colors.grey),
                     ),
                   ),
                 ),

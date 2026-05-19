@@ -11,6 +11,7 @@ class TelemetryCard extends StatelessWidget {
   final IconData icon;
   final double progress;
   final bool isDanger;
+  final bool isConnected;
 
   const TelemetryCard({
     super.key,
@@ -20,6 +21,7 @@ class TelemetryCard extends StatelessWidget {
     required this.icon,
     required this.progress,
     required this.isDanger,
+    required this.isConnected,
   });
 
   @override
@@ -30,7 +32,7 @@ class TelemetryCard extends StatelessWidget {
         color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: isDanger ? const Color(0xFFD93025).withOpacity(0.25) : Colors.transparent,
+          color: (isConnected && isDanger) ? const Color(0xFFD93025).withOpacity(0.25) : Colors.transparent,
           width: 1.5,
         ),
         boxShadow: [
@@ -52,23 +54,33 @@ class TelemetryCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: isDanger ? const Color(0xFFFCE8E6) : const Color(0xFFE6F4EA),
+                  color: isConnected
+                      ? (isDanger ? const Color(0xFFFCE8E6) : const Color(0xFFE6F4EA))
+                      : (AppColors.isDark ? const Color(0xFF374151) : const Color(0xFFF1F3F4)),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
                   children: [
                     Icon(
-                      isDanger ? Icons.warning_amber_rounded : Icons.check_circle_rounded,
+                      isConnected
+                          ? (isDanger ? Icons.warning_amber_rounded : Icons.check_circle_rounded)
+                          : Icons.remove_rounded,
                       size: 10,
-                      color: isDanger ? const Color(0xFFD93025) : const Color(0xFF137333),
+                      color: isConnected
+                          ? (isDanger ? const Color(0xFFD93025) : const Color(0xFF137333))
+                          : AppColors.textLight,
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      isDanger ? 'Alert' : 'Safe',
+                      isConnected
+                          ? (isDanger ? 'Alert' : 'Safe')
+                          : 'No Signal',
                       style: AppStyles.bodyMedium.copyWith(
                         fontSize: 9,
                         fontWeight: FontWeight.bold,
-                        color: isDanger ? const Color(0xFFD93025) : const Color(0xFF137333),
+                        color: isConnected
+                            ? (isDanger ? const Color(0xFFD93025) : const Color(0xFF137333))
+                            : AppColors.textLight,
                       ),
                     ),
                   ],
@@ -84,7 +96,7 @@ class TelemetryCard extends StatelessWidget {
             style: AppStyles.headingMedium.copyWith(
               fontSize: 22,
               fontWeight: FontWeight.bold,
-              color: isDanger ? const Color(0xFFD93025) : AppColors.textPrimary,
+              color: (isConnected && isDanger) ? const Color(0xFFD93025) : AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 2),
@@ -109,7 +121,7 @@ class TelemetryCard extends StatelessWidget {
               minHeight: 5,
               backgroundColor: const Color(0xFFE9ECEF),
               valueColor: AlwaysStoppedAnimation<Color>(
-                isDanger ? const Color(0xFFD93025) : AppColors.primary,
+                (isConnected && isDanger) ? const Color(0xFFD93025) : AppColors.primary,
               ),
             ),
           ),

@@ -12,6 +12,7 @@ class LiveCameraCard extends StatefulWidget {
   final String statusMessage;
   final String? cameraUrl;
   final ValueChanged<String>? onCameraUrlChanged;
+  final bool isConnected;
 
   const LiveCameraCard({
     super.key,
@@ -20,6 +21,7 @@ class LiveCameraCard extends StatefulWidget {
     required this.statusMessage,
     this.cameraUrl,
     this.onCameraUrlChanged,
+    required this.isConnected,
   });
 
   @override
@@ -135,25 +137,31 @@ class _LiveCameraCardState extends State<LiveCameraCard> {
                   vertical: 5,
                 ),
                 decoration: BoxDecoration(
-                  color: widget.isDanger
-                      ? const Color(0xFFD93025).withOpacity(0.85)
-                      : const Color(0xFF34A853).withOpacity(0.85),
+                  color: !widget.isConnected
+                      ? (isDark ? const Color(0xFF374151) : Colors.grey.shade600).withOpacity(0.85)
+                      : (widget.isDanger
+                          ? const Color(0xFFD93025).withOpacity(0.85)
+                          : const Color(0xFF34A853).withOpacity(0.85)),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
                   children: [
                     Icon(
-                      widget.isDanger
-                          ? Icons.warning_amber_rounded
-                          : Icons.verified_user_rounded,
+                      !widget.isConnected
+                          ? Icons.wifi_off_rounded
+                          : (widget.isDanger
+                              ? Icons.warning_amber_rounded
+                              : Icons.verified_user_rounded),
                       size: 12,
                       color: AppColors.white,
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      widget.isDanger
-                          ? widget.statusMessage.toUpperCase()
-                          : 'STABLE',
+                      !widget.isConnected
+                          ? 'NO SIGNAL'
+                          : (widget.isDanger
+                              ? widget.statusMessage.toUpperCase()
+                              : 'STABLE'),
                       style: AppStyles.bodyMedium.copyWith(
                         color: AppColors.white,
                         fontSize: 10,

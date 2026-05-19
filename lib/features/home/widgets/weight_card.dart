@@ -6,10 +6,14 @@ import 'package:neocare/core/utils/app_styles.dart';
 
 class WeightCard extends StatelessWidget {
   final double weight;
+  final bool isConnected;
+  final bool showValue;
 
   const WeightCard({
     super.key,
     required this.weight,
+    required this.isConnected,
+    required this.showValue,
   });
 
   @override
@@ -78,11 +82,11 @@ class WeightCard extends StatelessWidget {
             textBaseline: TextBaseline.alphabetic,
             children: [
               Text(
-                '$weight',
+                showValue ? '$weight' : '--',
                 style: AppStyles.headingMedium.copyWith(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+                  color: isConnected ? AppColors.textPrimary : (showValue ? AppColors.textPrimary : AppColors.textLight),
                 ),
               ),
               const SizedBox(width: 4),
@@ -91,7 +95,7 @@ class WeightCard extends StatelessWidget {
                 style: AppStyles.subtitle.copyWith(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textSecondary,
+                  color: isConnected ? AppColors.textSecondary : (showValue ? AppColors.textSecondary : AppColors.textLight),
                 ),
               ),
             ],
