@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:neocare/main.dart';
 
 class AppColors {
   // Brand colors
@@ -13,6 +14,8 @@ class AppColors {
   // Dynamic system theme detector
   static bool get isDark {
     try {
+      if (themeNotifier.value == ThemeMode.dark) return true;
+      if (themeNotifier.value == ThemeMode.light) return false;
       final dispatcher = SchedulerBinding.instance.platformDispatcher;
       return dispatcher.platformBrightness == Brightness.dark;
     } catch (_) {
