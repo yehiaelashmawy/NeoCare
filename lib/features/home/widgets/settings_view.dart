@@ -14,8 +14,23 @@ import 'package:neocare/features/home/widgets/settings/alarm_volume_row.dart';
 
 class SettingsView extends StatefulWidget {
   final VoidCallback onSettingsSaved;
+  final ValueNotifier<bool>? connectionNotifier;
+  final ValueNotifier<bool>? connectingNotifier;
+  final ValueNotifier<String>? espIpNotifier;
+  final ValueNotifier<String>? cameraUrlNotifier;
+  final ValueNotifier<bool>? cameraConnectedNotifier;
+  final ValueNotifier<bool>? cameraCheckingNotifier;
 
-  const SettingsView({super.key, required this.onSettingsSaved});
+  const SettingsView({
+    super.key,
+    required this.onSettingsSaved,
+    this.connectionNotifier,
+    this.connectingNotifier,
+    this.espIpNotifier,
+    this.cameraUrlNotifier,
+    this.cameraConnectedNotifier,
+    this.cameraCheckingNotifier,
+  });
 
   @override
   State<SettingsView> createState() => _SettingsViewState();
@@ -36,6 +51,59 @@ class _SettingsViewState extends State<SettingsView> {
   void initState() {
     super.initState();
     _loadSettings();
+    // Subscribe to live connection state from the dashboard
+    widget.connectionNotifier?.addListener(_onConnectionChanged);
+    widget.connectingNotifier?.addListener(_onConnectionChanged);
+    widget.espIpNotifier?.addListener(_onEspIpChanged);
+    widget.cameraUrlNotifier?.addListener(_onCameraUrlChanged);
+    widget.cameraConnectedNotifier?.addListener(_onCameraConnectionChanged);
+    widget.cameraCheckingNotifier?.addListener(_onCameraConnectionChanged);
+  }
+
+  void _onConnectionChanged() {
+    if (!mounted) return;
+    setState(() {
+      _isEspConnected = widget.connectionNotifier?.value ?? _isEspConnected;
+      _isCheckingEsp = widget.connectingNotifier?.value ?? _isCheckingEsp;
+    });
+  }
+
+  void _onEspIpChanged() {
+    if (!mounted) return;
+    final newIp = widget.espIpNotifier?.value ?? '';
+    setState(() {
+      _esp32Ip = newIp.isEmpty ? 'Not set' : newIp;
+    });
+  }
+
+  void _onCameraUrlChanged() {
+    if (!mounted) return;
+    final newUrl = widget.cameraUrlNotifier?.value ?? '';
+    setState(() {
+      _cameraIp = newUrl.isEmpty ? 'Not set' : newUrl;
+    });
+    _checkCameraConnection();
+  }
+
+  void _onCameraConnectionChanged() {
+    if (!mounted) return;
+    setState(() {
+      _isCameraConnected =
+          widget.cameraConnectedNotifier?.value ?? _isCameraConnected;
+      _isCheckingCamera =
+          widget.cameraCheckingNotifier?.value ?? _isCheckingCamera;
+    });
+  }
+
+  @override
+  void dispose() {
+    widget.connectionNotifier?.removeListener(_onConnectionChanged);
+    widget.connectingNotifier?.removeListener(_onConnectionChanged);
+    widget.espIpNotifier?.removeListener(_onEspIpChanged);
+    widget.cameraUrlNotifier?.removeListener(_onCameraUrlChanged);
+    widget.cameraConnectedNotifier?.removeListener(_onCameraConnectionChanged);
+    widget.cameraCheckingNotifier?.removeListener(_onCameraConnectionChanged);
+    super.dispose();
   }
 
   Future<void> _loadSettings() async {
@@ -268,27 +336,19 @@ class _SettingsViewState extends State<SettingsView> {
                             subtitle: _esp32Ip,
                             onTap: () =>
                                 _showEditIpDialog('ESP32', 'esp32Ip', _esp32Ip),
-                            trailing: _isCheckingEsp
-                                ? const SizedBox(
-                                    width: 14,
-                                    height: 14,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : SettingsDotIndicator(
-                                    text: _esp32Ip == 'Not set'
-                                        ? 'Not Configured'
-                                        : (_isEspConnected
-                                              ? 'Connected'
-                                              : 'Disconnected'),
-                                    color: _esp32Ip == 'Not set'
-                                        ? const Color(0xFF6B7280)
-                                        : (_isEspConnected
-                                              ? const Color(0xFF137333)
-                                              : const Color(0xFFD93025)),
-                                    isDark: isDark,
-                                  ),
+                            trailing: SettingsDotIndicator(
+                              text: _esp32Ip == 'Not set'
+                                  ? 'Not Configured'
+                                  : (_isEspConnected
+                                        ? 'Connected'
+                                        : 'Disconnected'),
+                              color: _esp32Ip == 'Not set'
+                                  ? const Color(0xFF6B7280)
+                                  : (_isEspConnected
+                                        ? const Color(0xFF137333)
+                                        : const Color(0xFFD93025)),
+                              isDark: isDark,
+                            ),
                           ),
                           const SettingsDivider(),
                           SettingsRow(
@@ -304,27 +364,19 @@ class _SettingsViewState extends State<SettingsView> {
                               'cameraIp',
                               _cameraIp,
                             ),
-                            trailing: _isCheckingCamera
-                                ? const SizedBox(
-                                    width: 14,
-                                    height: 14,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : SettingsDotIndicator(
-                                    text: _cameraIp == 'Not set'
-                                        ? 'Not Configured'
-                                        : (_isCameraConnected
-                                              ? 'Connected'
-                                              : 'Disconnected'),
-                                    color: _cameraIp == 'Not set'
-                                        ? const Color(0xFF6B7280)
-                                        : (_isCameraConnected
-                                              ? const Color(0xFF137333)
-                                              : const Color(0xFFD93025)),
-                                    isDark: isDark,
-                                  ),
+                            trailing: SettingsDotIndicator(
+                              text: _cameraIp == 'Not set'
+                                  ? 'Not Configured'
+                                  : (_isCameraConnected
+                                        ? 'Connected'
+                                        : 'Disconnected'),
+                              color: _cameraIp == 'Not set'
+                                  ? const Color(0xFF6B7280)
+                                  : (_isCameraConnected
+                                        ? const Color(0xFF137333)
+                                        : const Color(0xFFD93025)),
+                              isDark: isDark,
+                            ),
                           ),
                         ],
                       ),
@@ -391,14 +443,60 @@ class _SettingsViewState extends State<SettingsView> {
                           SettingsRow(
                             icon: Icons.sensors_rounded,
                             iconBg: isDark
-                                ? const Color(0xFF0F5132).withOpacity(0.4)
-                                : const Color(0xFFE6F4EA),
-                            iconColor: const Color(0xFF137333),
+                                ? (_isEspConnected
+                                      ? const Color(0xFF0F5132).withOpacity(0.4)
+                                      : const Color(
+                                          0xFF842029,
+                                        ).withOpacity(0.4))
+                                : (_isEspConnected
+                                      ? const Color(0xFFE6F4EA)
+                                      : const Color(0xFFFCE8E6)),
+                            iconColor: _isEspConnected
+                                ? const Color(0xFF137333)
+                                : const Color(0xFFD93025),
                             title: 'Sensor Status',
                             trailing: SettingsPillIndicator(
-                              text: 'All Active',
-                              color: const Color(0xFF137333),
+                              text: _isEspConnected ? 'All Active' : 'Offline',
+                              color: _isEspConnected
+                                  ? const Color(0xFF137333)
+                                  : const Color(0xFFD93025),
                               isDark: isDark,
+                              icon: _isEspConnected
+                                  ? Icons.check_circle_rounded
+                                  : Icons.cancel_rounded,
+                            ),
+                          ),
+                          const SettingsDivider(),
+                          SettingsRow(
+                            icon: Icons.videocam_rounded,
+                            iconBg: isDark
+                                ? (_isCameraConnected
+                                      ? const Color(0xFF0F5132).withOpacity(0.4)
+                                      : const Color(
+                                          0xFF842029,
+                                        ).withOpacity(0.4))
+                                : (_isCameraConnected
+                                      ? const Color(0xFFE6F4EA)
+                                      : const Color(0xFFFCE8E6)),
+                            iconColor: _isCameraConnected
+                                ? const Color(0xFF137333)
+                                : const Color(0xFFD93025),
+                            title: 'Camera Status',
+                            trailing: SettingsPillIndicator(
+                              text: _cameraIp == 'Not set'
+                                  ? 'Not Configured'
+                                  : (_isCameraConnected ? 'Online' : 'Offline'),
+                              color: _cameraIp == 'Not set'
+                                  ? const Color(0xFF6B7280)
+                                  : (_isCameraConnected
+                                        ? const Color(0xFF137333)
+                                        : const Color(0xFFD93025)),
+                              isDark: isDark,
+                              icon: _cameraIp == 'Not set'
+                                  ? Icons.help_outline_rounded
+                                  : (_isCameraConnected
+                                        ? Icons.check_circle_rounded
+                                        : Icons.cancel_rounded),
                             ),
                           ),
                           const SettingsDivider(),

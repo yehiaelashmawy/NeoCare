@@ -2,6 +2,7 @@
 
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:neocare/core/utils/app_colors.dart';
 import 'package:neocare/core/utils/app_styles.dart';
 import 'package:audioplayers/audioplayers.dart';
@@ -15,7 +16,22 @@ import 'package:neocare/features/home/services/telemetry_service.dart';
 import 'package:neocare/core/services/app_preferences.dart';
 
 class HomeViewBody extends StatefulWidget {
-  const HomeViewBody({super.key});
+  final ValueNotifier<bool> connectionNotifier;
+  final ValueNotifier<bool> connectingNotifier;
+  final ValueNotifier<String> espIpNotifier;
+  final ValueNotifier<String> cameraUrlNotifier;
+  final ValueNotifier<bool> cameraConnectedNotifier;
+  final ValueNotifier<bool> cameraCheckingNotifier;
+
+  const HomeViewBody({
+    super.key,
+    required this.connectionNotifier,
+    required this.connectingNotifier,
+    required this.espIpNotifier,
+    required this.cameraUrlNotifier,
+    required this.cameraConnectedNotifier,
+    required this.cameraCheckingNotifier,
+  });
 
   @override
   State<HomeViewBody> createState() => HomeViewBodyState();
@@ -38,17 +54,34 @@ class HomeViewBodyState extends State<HomeViewBody> {
   bool _hasEverConnected = false;
   Timer? _pollingTimer;
   Timer? _simulationTimer;
+  Timer? _cameraPollingTimer;
 
   late final AudioPlayer _audioPlayer;
   bool _isAudioPlaying = false;
 
   bool get _showLiveData => _isConnected || (_esp32Ip.isNotEmpty && !_isConnecting && _hasEverConnected);
 
+  void _notifyListeners() {
+    widget.connectionNotifier.value = _isConnected;
+    widget.connectingNotifier.value = _isConnecting;
+    widget.espIpNotifier.value = _esp32Ip;
+    widget.cameraUrlNotifier.value = _cameraUrl;
+  }
+
   @override
   void initState() {
     super.initState();
     _audioPlayer = AudioPlayer();
     _loadPreferences();
+  }
+
+  @override
+  void dispose() {
+    _pollingTimer?.cancel();
+    _simulationTimer?.cancel();
+    _cameraPollingTimer?.cancel();
+    _audioPlayer.dispose();
+    super.dispose();
   }
 
   Future<void> _loadPreferences() async {
@@ -74,6 +107,8 @@ class HomeViewBodyState extends State<HomeViewBody> {
           _updateAlarmSound();
         }
       });
+      _startCameraPolling();
+      _notifyListeners();
     }
   }
 
@@ -94,6 +129,7 @@ class HomeViewBodyState extends State<HomeViewBody> {
             _isConnecting = false;
             _hasEverConnected = true;
           });
+          _notifyListeners();
           _updateAlarmSound();
         }
       } catch (e) {
@@ -103,10 +139,49 @@ class HomeViewBodyState extends State<HomeViewBody> {
             _isConnected = false;
             _isConnecting = false;
           });
+          _notifyListeners();
           _updateAlarmSound();
         }
       }
     });
+  }
+
+  void _startCameraPolling() {
+    _cameraPollingTimer?.cancel();
+    if (_cameraUrl.isEmpty) {
+      widget.cameraConnectedNotifier.value = false;
+      widget.cameraCheckingNotifier.value = false;
+      return;
+    }
+
+    // Run first check immediately
+    _runCameraCheck();
+
+    // Setup periodic polling check
+    _cameraPollingTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
+      _runCameraCheck();
+    });
+  }
+
+  Future<void> _runCameraCheck() async {
+    if (_cameraUrl.isEmpty) {
+      widget.cameraConnectedNotifier.value = false;
+      widget.cameraCheckingNotifier.value = false;
+      return;
+    }
+    widget.cameraCheckingNotifier.value = true;
+    try {
+      String url = _cameraUrl;
+      if (!url.startsWith('http')) {
+        url = 'http://$url';
+      }
+      final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 2));
+      widget.cameraConnectedNotifier.value = response.statusCode == 200;
+    } catch (_) {
+      widget.cameraConnectedNotifier.value = false;
+    } finally {
+      widget.cameraCheckingNotifier.value = false;
+    }
   }
 
   void _updateAlarmSound() async {
@@ -218,6 +293,8 @@ class HomeViewBodyState extends State<HomeViewBody> {
                 _hasEverConnected = false;
                 _telemetry = TelemetryModel.initial();
               });
+              _startCameraPolling();
+              _notifyListeners();
               _updateAlarmSound();
               AppPreferences.setEsp32Ip("");
               AppPreferences.setCameraUrl("");
@@ -234,6 +311,8 @@ class HomeViewBodyState extends State<HomeViewBody> {
               setState(() {
                 _cameraUrl = newCameraUrl;
               });
+              _startCameraPolling();
+              _notifyListeners();
               AppPreferences.setCameraUrl(newCameraUrl);
               if (newIp.isNotEmpty) {
                 setState(() {
@@ -274,13 +353,7 @@ class HomeViewBodyState extends State<HomeViewBody> {
     );
   }
 
-  @override
-  void dispose() {
-    _pollingTimer?.cancel();
-    _simulationTimer?.cancel();
-    _audioPlayer.dispose();
-    super.dispose();
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -481,6 +554,8 @@ class HomeViewBodyState extends State<HomeViewBody> {
                             setState(() {
                               _cameraUrl = newUrl;
                             });
+                            _startCameraPolling();
+                            _notifyListeners();
                             AppPreferences.setCameraUrl(newUrl);
                           },
                           isConnected: _isConnected,
@@ -517,6 +592,8 @@ class HomeViewBodyState extends State<HomeViewBody> {
                                     ? (_telemetry.airTemp < 25.0 || _telemetry.airTemp > 37.0)
                                     : false,
                                 isConnected: _isConnected,
+                                isConnecting: _isConnecting,
+                                isConfigured: _esp32Ip.isNotEmpty,
                               ),
                             ),
                             const SizedBox(width: 16),
@@ -531,6 +608,8 @@ class HomeViewBodyState extends State<HomeViewBody> {
                                     ? (_telemetry.humidity < 50.0 || _telemetry.humidity > 70.0)
                                     : false,
                                 isConnected: _isConnected,
+                                isConnecting: _isConnecting,
+                                isConfigured: _esp32Ip.isNotEmpty,
                               ),
                             ),
                           ],
@@ -547,6 +626,8 @@ class HomeViewBodyState extends State<HomeViewBody> {
                                 progress: _showLiveData ? _telemetry.airQuality / 800 : 0.0,
                                 isDanger: _showLiveData ? _telemetry.airQuality > 500 : false,
                                 isConnected: _isConnected,
+                                isConnecting: _isConnecting,
+                                isConfigured: _esp32Ip.isNotEmpty,
                                 progressColor: const Color(0xFF34A853),
                               ),
                             ),
@@ -560,6 +641,8 @@ class HomeViewBodyState extends State<HomeViewBody> {
                                 progress: _showLiveData ? _telemetry.noise / 100 : 0.0,
                                 isDanger: _showLiveData ? _telemetry.noise > 600 : false,
                                 isConnected: _isConnected,
+                                isConnecting: _isConnecting,
+                                isConfigured: _esp32Ip.isNotEmpty,
                                 progressColor: const Color(0xFF34A853),
                               ),
                             ),
@@ -603,6 +686,8 @@ class HomeViewBodyState extends State<HomeViewBody> {
               setState(() {
                 _cameraUrl = newUrl;
               });
+              _startCameraPolling();
+              _notifyListeners();
               AppPreferences.setCameraUrl(newUrl);
             },
             isConnected: _isConnected,
@@ -638,6 +723,8 @@ class HomeViewBodyState extends State<HomeViewBody> {
                                 ? (_telemetry.airTemp < 25.0 || _telemetry.airTemp > 37.0)
                                 : false,
                             isConnected: _isConnected,
+                            isConnecting: _isConnecting,
+                            isConfigured: _esp32Ip.isNotEmpty,
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -652,6 +739,8 @@ class HomeViewBodyState extends State<HomeViewBody> {
                                 ? (_telemetry.humidity < 50.0 || _telemetry.humidity > 70.0)
                                 : false,
                             isConnected: _isConnected,
+                            isConnecting: _isConnecting,
+                            isConfigured: _esp32Ip.isNotEmpty,
                           ),
                         ),
                       ],
@@ -668,6 +757,8 @@ class HomeViewBodyState extends State<HomeViewBody> {
                             progress: _showLiveData ? _telemetry.airQuality / 800 : 0.0,
                             isDanger: _showLiveData ? _telemetry.airQuality > 500 : false,
                             isConnected: _isConnected,
+                            isConnecting: _isConnecting,
+                            isConfigured: _esp32Ip.isNotEmpty,
                             progressColor: const Color(0xFF34A853),
                           ),
                         ),
@@ -681,6 +772,8 @@ class HomeViewBodyState extends State<HomeViewBody> {
                             progress: _showLiveData ? _telemetry.noise / 100 : 0.0,
                             isDanger: _showLiveData ? _telemetry.noise > 600 : false,
                             isConnected: _isConnected,
+                            isConnecting: _isConnecting,
+                            isConfigured: _esp32Ip.isNotEmpty,
                             progressColor: const Color(0xFF34A853),
                           ),
                         ),
@@ -722,6 +815,8 @@ class HomeViewBodyState extends State<HomeViewBody> {
               setState(() {
                 _cameraUrl = newUrl;
               });
+              _startCameraPolling();
+              _notifyListeners();
               AppPreferences.setCameraUrl(newUrl);
             },
             isConnected: _isConnected,
@@ -740,6 +835,8 @@ class HomeViewBodyState extends State<HomeViewBody> {
                       ? (_telemetry.airTemp < 25.0 || _telemetry.airTemp > 37.0)
                       : false,
                   isConnected: _isConnected,
+                  isConnecting: _isConnecting,
+                  isConfigured: _esp32Ip.isNotEmpty,
                 ),
               ),
               const SizedBox(width: 16),
@@ -754,6 +851,8 @@ class HomeViewBodyState extends State<HomeViewBody> {
                       ? (_telemetry.humidity < 50.0 || _telemetry.humidity > 70.0)
                       : false,
                   isConnected: _isConnected,
+                  isConnecting: _isConnecting,
+                  isConfigured: _esp32Ip.isNotEmpty,
                 ),
               ),
             ],
@@ -777,6 +876,8 @@ class HomeViewBodyState extends State<HomeViewBody> {
                   progress: _showLiveData ? _telemetry.airQuality / 800 : 0.0,
                   isDanger: _showLiveData ? _telemetry.airQuality > 500 : false,
                   isConnected: _isConnected,
+                  isConnecting: _isConnecting,
+                  isConfigured: _esp32Ip.isNotEmpty,
                   progressColor: const Color(0xFF34A853),
                 ),
               ),
@@ -790,6 +891,8 @@ class HomeViewBodyState extends State<HomeViewBody> {
                   progress: _showLiveData ? _telemetry.noise / 100 : 0.0,
                   isDanger: _showLiveData ? _telemetry.noise > 600 : false,
                   isConnected: _isConnected,
+                  isConnecting: _isConnecting,
+                  isConfigured: _esp32Ip.isNotEmpty,
                   progressColor: const Color(0xFF34A853),
                 ),
               ),

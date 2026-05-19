@@ -165,17 +165,19 @@ class SettingsPillIndicator extends StatelessWidget {
   final String text;
   final Color color;
   final bool isDark;
+  final IconData? icon;
 
   const SettingsPillIndicator({
     super.key,
     required this.text,
     required this.color,
     required this.isDark,
+    this.icon,
   });
 
   @override
   Widget build(BuildContext context) {
-    final Color bgColor = isDark ? color.withOpacity(0.2) : const Color(0xFFD1FAE5);
+    final Color bgColor = color.withOpacity(isDark ? 0.2 : 0.12);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
@@ -185,7 +187,7 @@ class SettingsPillIndicator extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.check_circle_rounded, color: color, size: 12),
+          Icon(icon ?? Icons.check_circle_rounded, color: color, size: 12),
           const SizedBox(width: 4),
           Text(
             text,

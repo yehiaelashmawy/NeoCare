@@ -19,6 +19,14 @@ class _HomeViewState extends State<HomeView> {
   final GlobalKey<HomeViewBodyState> _dashboardKey =
       GlobalKey<HomeViewBodyState>();
 
+  // Live connection notifiers — owned here so both children can share them
+  final ValueNotifier<bool> _connectionNotifier = ValueNotifier(false);
+  final ValueNotifier<bool> _connectingNotifier = ValueNotifier(false);
+  final ValueNotifier<String> _espIpNotifier = ValueNotifier("");
+  final ValueNotifier<String> _cameraUrlNotifier = ValueNotifier("");
+  final ValueNotifier<bool> _cameraConnectedNotifier = ValueNotifier(false);
+  final ValueNotifier<bool> _cameraCheckingNotifier = ValueNotifier(false);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -26,11 +34,25 @@ class _HomeViewState extends State<HomeView> {
       body: IndexedStack(
         index: _currentIndex,
         children: [
-          HomeViewBody(key: _dashboardKey),
+          HomeViewBody(
+            key: _dashboardKey,
+            connectionNotifier: _connectionNotifier,
+            connectingNotifier: _connectingNotifier,
+            espIpNotifier: _espIpNotifier,
+            cameraUrlNotifier: _cameraUrlNotifier,
+            cameraConnectedNotifier: _cameraConnectedNotifier,
+            cameraCheckingNotifier: _cameraCheckingNotifier,
+          ),
           SettingsView(
             onSettingsSaved: () {
               _dashboardKey.currentState?.reloadSettings();
             },
+            connectionNotifier: _connectionNotifier,
+            connectingNotifier: _connectingNotifier,
+            espIpNotifier: _espIpNotifier,
+            cameraUrlNotifier: _cameraUrlNotifier,
+            cameraConnectedNotifier: _cameraConnectedNotifier,
+            cameraCheckingNotifier: _cameraCheckingNotifier,
           ),
         ],
       ),
