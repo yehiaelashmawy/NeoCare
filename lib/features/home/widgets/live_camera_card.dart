@@ -35,6 +35,12 @@ class _LiveCameraCardState extends State<LiveCameraCard> {
   Widget build(BuildContext context) {
     final bool hasLiveStream =
         widget.cameraUrl != null && widget.cameraUrl!.isNotEmpty;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final Color textSecondaryColor =
+        isDark ? const Color(0xFFE5E7EB) : const Color(0xFF333A4D);
+    final Color textPrimaryColor =
+        isDark ? const Color(0xFFF9FAFB) : const Color(0xFF1E2229);
 
     return Container(
       width: double.infinity,
@@ -169,11 +175,19 @@ class _LiveCameraCardState extends State<LiveCameraCard> {
                   vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.white.withOpacity(0.85),
+                  color: isDark
+                      ? const Color(0xFF1E293B).withOpacity(0.85)
+                      : Colors.white.withOpacity(0.85),
                   borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isDark
+                        ? AppColors.white.withOpacity(0.1)
+                        : Colors.transparent,
+                    width: 1,
+                  ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.black.withOpacity(0.05),
+                      color: AppColors.black.withOpacity(isDark ? 0.3 : 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -187,7 +201,7 @@ class _LiveCameraCardState extends State<LiveCameraCard> {
                       style: AppStyles.bodyMedium.copyWith(
                         fontSize: 9,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.textSecondary,
+                        color: textSecondaryColor,
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -208,7 +222,7 @@ class _LiveCameraCardState extends State<LiveCameraCard> {
                             size: 18,
                             color: _isZoomed
                                 ? AppColors.primary
-                                : AppColors.textPrimary,
+                                : textPrimaryColor,
                           ),
                         ),
                         const SizedBox(width: 14),
@@ -226,7 +240,7 @@ class _LiveCameraCardState extends State<LiveCameraCard> {
                             size: 18,
                             color: _isLightOn
                                 ? Colors.amber[700]
-                                : AppColors.textPrimary,
+                                : textPrimaryColor,
                           ),
                         ),
                         if (hasLiveStream) ...[
@@ -241,7 +255,7 @@ class _LiveCameraCardState extends State<LiveCameraCard> {
                             child: Icon(
                               Icons.refresh_rounded,
                               size: 18,
-                              color: AppColors.textPrimary,
+                              color: textPrimaryColor,
                             ),
                           ),
                         ],
@@ -252,7 +266,7 @@ class _LiveCameraCardState extends State<LiveCameraCard> {
                           child: Icon(
                             Icons.settings_rounded,
                             size: 18,
-                            color: AppColors.textPrimary,
+                            color: textPrimaryColor,
                           ),
                         ),
                       ],
@@ -305,7 +319,9 @@ class _LiveCameraCardState extends State<LiveCameraCard> {
               Text(
                 'Enter the IP Address or URL of your MJPEG Camera Stream:',
                 style: AppStyles.bodyMedium.copyWith(
-                  color: isDark ? AppColors.white.withOpacity(0.7) : AppColors.textLight,
+                  color: isDark
+                      ? AppColors.white.withOpacity(0.7)
+                      : AppColors.textLight,
                   fontSize: 12,
                 ),
               ),
@@ -322,11 +338,18 @@ class _LiveCameraCardState extends State<LiveCameraCard> {
                   hintText: 'e.g. 192.168.1.9:8080',
                   labelText: 'Camera IP / URL',
                   labelStyle: TextStyle(
-                    color: isDark ? AppColors.white.withOpacity(0.6) : AppColors.textSecondary,
+                    color: isDark
+                        ? AppColors.white.withOpacity(0.6)
+                        : AppColors.textSecondary,
                   ),
-                  prefixIcon: const Icon(Icons.link_rounded, color: AppColors.primary),
+                  prefixIcon: const Icon(
+                    Icons.link_rounded,
+                    color: AppColors.primary,
+                  ),
                   filled: true,
-                  fillColor: isDark ? const Color(0xFF334155) : const Color(0xFFF8FAFC),
+                  fillColor: isDark
+                      ? const Color(0xFF334155)
+                      : const Color(0xFFF8FAFC),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide.none,
@@ -337,7 +360,10 @@ class _LiveCameraCardState extends State<LiveCameraCard> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                    borderSide: const BorderSide(
+                      color: AppColors.primary,
+                      width: 1.5,
+                    ),
                   ),
                 ),
               ),
@@ -345,7 +371,9 @@ class _LiveCameraCardState extends State<LiveCameraCard> {
               Text(
                 'Note: Both raw IP addresses (e.g. 192.168.1.9:8080) and complete HTTP/HTTPS links are supported.',
                 style: AppStyles.bodyMedium.copyWith(
-                  color: isDark ? AppColors.white.withOpacity(0.4) : AppColors.textSecondary.withOpacity(0.7),
+                  color: isDark
+                      ? AppColors.white.withOpacity(0.4)
+                      : AppColors.textSecondary.withOpacity(0.7),
                   fontSize: 10,
                   fontStyle: FontStyle.italic,
                 ),
@@ -360,7 +388,9 @@ class _LiveCameraCardState extends State<LiveCameraCard> {
               child: Text(
                 'Cancel',
                 style: TextStyle(
-                  color: isDark ? AppColors.white.withOpacity(0.6) : AppColors.textSecondary,
+                  color: isDark
+                      ? AppColors.white.withOpacity(0.6)
+                      : AppColors.textSecondary,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -391,7 +421,10 @@ class _LiveCameraCardState extends State<LiveCameraCard> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
               ),
               child: const Text(
                 'Save & Link',

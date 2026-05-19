@@ -21,15 +21,40 @@ class TelemetryModel {
 
   /// Factory constructor to parse JSON telemetry from the ESP32 server
   factory TelemetryModel.fromJson(Map<String, dynamic> json) {
+    double parseDouble(dynamic value, double fallback) {
+      if (value == null) return fallback;
+      if (value is num) return value.toDouble();
+      if (value is String) return double.tryParse(value) ?? fallback;
+      return fallback;
+    }
+
+    int parseInt(dynamic value, int fallback) {
+      if (value == null) return fallback;
+      if (value is num) return value.toInt();
+      if (value is String) return int.tryParse(value) ?? fallback;
+      return fallback;
+    }
+
+    bool parseBool(dynamic value, bool fallback) {
+      if (value == null) return fallback;
+      if (value is bool) return value;
+      if (value is String) {
+        final lower = value.toLowerCase();
+        return lower == 'true' || lower == '1';
+      }
+      if (value is num) return value != 0;
+      return fallback;
+    }
+
     return TelemetryModel(
-      airTemp: (json['airTemp'] as num).toDouble(),
-      humidity: (json['humidity'] as num).toDouble(),
-      babyTemp: (json['babyTemp'] as num).toDouble(),
-      airQuality: (json['gas'] as num).toInt(),
-      noise: (json['sound'] as num).toInt(),
-      weight: (json['weight'] as num).toDouble(),
-      isDanger: json['danger'] as bool,
-      statusMessage: json['message'] as String,
+      airTemp: parseDouble(json['airTemp'] ?? json['air_temp'] ?? json['temp'], 28.0),
+      humidity: parseDouble(json['humidity'] ?? json['hum'], 60.0),
+      babyTemp: parseDouble(json['babyTemp'] ?? json['baby_temp'] ?? json['btemp'], 36.8),
+      airQuality: parseInt(json['gas'] ?? json['airQuality'] ?? json['air_quality'] ?? json['mq135'], 42),
+      noise: parseInt(json['sound'] ?? json['noise'] ?? json['soundVal'], 35),
+      weight: parseDouble(json['weight'] ?? json['w'], 3.2),
+      isDanger: parseBool(json['danger'] ?? json['isDanger'] ?? json['is_danger'], false),
+      statusMessage: (json['message'] ?? json['statusMessage'] ?? json['status_message'] ?? json['errorMsg'] ?? 'Normal').toString(),
     );
   }
 

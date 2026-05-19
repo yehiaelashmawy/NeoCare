@@ -34,9 +34,9 @@ class AppPreferences {
   static const String _keyCameraUrl = 'camera_url';
 
   /// Returns the saved ESP32 Local IP address.
-  static Future<String> getEsp32Ip() async {
+  static Future<String?> getEsp32Ip() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_keyEsp32Ip) ?? "";
+    return prefs.getString(_keyEsp32Ip);
   }
 
   /// Saves the ESP32 Local IP address.
@@ -46,9 +46,9 @@ class AppPreferences {
   }
 
   /// Returns the saved Camera URL.
-  static Future<String> getCameraUrl() async {
+  static Future<String?> getCameraUrl() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_keyCameraUrl) ?? "http://192.168.1.9:8080";
+    return prefs.getString(_keyCameraUrl);
   }
 
   /// Saves the Camera URL.

@@ -20,7 +20,9 @@ class TelemetryService {
       final Map<String, dynamic> data = json.decode(response.body);
       return TelemetryModel.fromJson(data);
     } else {
-      throw Exception('Failed to load telemetry data: HTTP Status ${response.statusCode}');
+      throw Exception(
+        'Failed to load telemetry data: HTTP Status ${response.statusCode}',
+      );
     }
   }
 }

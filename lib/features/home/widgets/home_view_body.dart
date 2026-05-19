@@ -51,13 +51,15 @@ class _HomeViewBodyState extends State<HomeViewBody> {
     final savedCamUrl = await AppPreferences.getCameraUrl();
     if (mounted) {
       setState(() {
-        if (savedCamUrl.isNotEmpty) {
+        if (savedCamUrl != null) {
           _cameraUrl = savedCamUrl;
         }
-        if (savedEspIp.isNotEmpty) {
+        if (savedEspIp != null) {
           _esp32Ip = savedEspIp;
-          _isConnecting = true;
-          _startPolling();
+          if (_esp32Ip.isNotEmpty) {
+            _isConnecting = true;
+            _startPolling();
+          }
         }
       });
     }
@@ -174,7 +176,9 @@ class _HomeViewBodyState extends State<HomeViewBody> {
             children: [
               Text(
                 'Enter your local ESP32 IP Address to link live telemetry parameters:',
-                style: AppStyles.bodyMedium.copyWith(color: AppColors.textLight),
+                style: AppStyles.bodyMedium.copyWith(
+                  color: AppColors.textLight,
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
@@ -192,7 +196,9 @@ class _HomeViewBodyState extends State<HomeViewBody> {
               const SizedBox(height: 20),
               Text(
                 'Enter your Live Camera Stream IP/URL:',
-                style: AppStyles.bodyMedium.copyWith(color: AppColors.textLight),
+                style: AppStyles.bodyMedium.copyWith(
+                  color: AppColors.textLight,
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
@@ -312,21 +318,45 @@ class _HomeViewBodyState extends State<HomeViewBody> {
 
   Widget _buildHeaderBar() {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    
-    final Color connectedBg = isDark ? const Color(0xFF0F5132).withOpacity(0.4) : const Color(0xFFE6F4EA);
-    final Color connectingBg = isDark ? const Color(0xFF664D03).withOpacity(0.4) : const Color(0xFFFEF7E0);
-    final Color errorBg = isDark ? const Color(0xFF842029).withOpacity(0.4) : const Color(0xFFFCE8E6);
-    final Color inactiveBg = isDark ? const Color(0xFF374151) : const Color(0xFFF1F3F4);
 
-    final Color connectedBorder = isDark ? const Color(0xFF0F5132) : const Color(0xFF34A853).withOpacity(0.3);
-    final Color connectingBorder = isDark ? const Color(0xFF664D03) : const Color(0xFFFBBC05).withOpacity(0.3);
-    final Color errorBorder = isDark ? const Color(0xFF842029) : const Color(0xFFD93025).withOpacity(0.3);
-    final Color inactiveBorder = isDark ? Colors.transparent : Colors.transparent;
+    final Color connectedBg = isDark
+        ? const Color(0xFF0F5132).withOpacity(0.4)
+        : const Color(0xFFE6F4EA);
+    final Color connectingBg = isDark
+        ? const Color(0xFF664D03).withOpacity(0.4)
+        : const Color(0xFFFEF7E0);
+    final Color errorBg = isDark
+        ? const Color(0xFF842029).withOpacity(0.4)
+        : const Color(0xFFFCE8E6);
+    final Color inactiveBg = isDark
+        ? const Color(0xFF374151)
+        : const Color(0xFFF1F3F4);
 
-    final Color connectedText = isDark ? const Color(0xFF75B798) : const Color(0xFF137333);
-    final Color connectingText = isDark ? const Color(0xFFFFDA6A) : const Color(0xFFB06000);
-    final Color errorText = isDark ? const Color(0xFFEA868F) : const Color(0xFFD93025);
-    final Color inactiveText = isDark ? const Color(0xFFD1D5DB) : AppColors.textSecondary;
+    final Color connectedBorder = isDark
+        ? const Color(0xFF0F5132)
+        : const Color(0xFF34A853).withOpacity(0.3);
+    final Color connectingBorder = isDark
+        ? const Color(0xFF664D03)
+        : const Color(0xFFFBBC05).withOpacity(0.3);
+    final Color errorBorder = isDark
+        ? const Color(0xFF842029)
+        : const Color(0xFFD93025).withOpacity(0.3);
+    final Color inactiveBorder = isDark
+        ? Colors.transparent
+        : Colors.transparent;
+
+    final Color connectedText = isDark
+        ? const Color(0xFF75B798)
+        : const Color(0xFF137333);
+    final Color connectingText = isDark
+        ? const Color(0xFFFFDA6A)
+        : const Color(0xFFB06000);
+    final Color errorText = isDark
+        ? const Color(0xFFEA868F)
+        : const Color(0xFFD93025);
+    final Color inactiveText = isDark
+        ? const Color(0xFFD1D5DB)
+        : AppColors.textSecondary;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
@@ -362,9 +392,7 @@ class _HomeViewBodyState extends State<HomeViewBody> {
                     ? connectedBg
                     : (_isConnecting
                           ? connectingBg
-                          : (_esp32Ip.isNotEmpty
-                                ? errorBg
-                                : inactiveBg)),
+                          : (_esp32Ip.isNotEmpty ? errorBg : inactiveBg)),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: _isConnected
@@ -472,7 +500,10 @@ class _HomeViewBodyState extends State<HomeViewBody> {
                     },
                   ),
                   const SizedBox(height: 24),
-                  BabyTempCard(babyTemp: _telemetry.babyTemp, isDanger: _telemetry.isDanger),
+                  BabyTempCard(
+                    babyTemp: _telemetry.babyTemp,
+                    isDanger: _telemetry.isDanger,
+                  ),
                 ],
               ),
             ),
@@ -494,7 +525,9 @@ class _HomeViewBodyState extends State<HomeViewBody> {
                           subtitle: 'Room Temp (25-37)',
                           icon: Icons.thermostat_rounded,
                           progress: (_telemetry.airTemp - 20) / (40 - 20),
-                          isDanger: _telemetry.airTemp < 25.0 || _telemetry.airTemp > 37.0,
+                          isDanger:
+                              _telemetry.airTemp < 25.0 ||
+                              _telemetry.airTemp > 37.0,
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -505,7 +538,9 @@ class _HomeViewBodyState extends State<HomeViewBody> {
                           subtitle: 'Humidity (50-70)',
                           icon: Icons.water_drop_rounded,
                           progress: (_telemetry.humidity - 30) / (90 - 30),
-                          isDanger: _telemetry.humidity < 50.0 || _telemetry.humidity > 70.0,
+                          isDanger:
+                              _telemetry.humidity < 50.0 ||
+                              _telemetry.humidity > 70.0,
                         ),
                       ),
                     ],
@@ -528,7 +563,7 @@ class _HomeViewBodyState extends State<HomeViewBody> {
                         child: TelemetryCard(
                           title: 'Noise',
                           value: '${_telemetry.noise} dB',
-                          subtitle: 'Noise (<60)',
+                          subtitle: 'Noise (<600)',
                           icon: Icons.graphic_eq_rounded,
                           progress: _telemetry.noise / 100,
                           isDanger: _telemetry.noise > 600,
@@ -572,7 +607,10 @@ class _HomeViewBodyState extends State<HomeViewBody> {
             children: [
               Expanded(
                 flex: 1,
-                child: BabyTempCard(babyTemp: _telemetry.babyTemp, isDanger: _telemetry.isDanger),
+                child: BabyTempCard(
+                  babyTemp: _telemetry.babyTemp,
+                  isDanger: _telemetry.isDanger,
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -588,7 +626,9 @@ class _HomeViewBodyState extends State<HomeViewBody> {
                             subtitle: 'Room Temp (25-37)',
                             icon: Icons.thermostat_rounded,
                             progress: (_telemetry.airTemp - 20) / (40 - 20),
-                            isDanger: _telemetry.airTemp < 25.0 || _telemetry.airTemp > 37.0,
+                            isDanger:
+                                _telemetry.airTemp < 25.0 ||
+                                _telemetry.airTemp > 37.0,
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -599,7 +639,9 @@ class _HomeViewBodyState extends State<HomeViewBody> {
                             subtitle: 'Humidity (50-70)',
                             icon: Icons.water_drop_rounded,
                             progress: (_telemetry.humidity - 30) / (90 - 30),
-                            isDanger: _telemetry.humidity < 50.0 || _telemetry.humidity > 70.0,
+                            isDanger:
+                                _telemetry.humidity < 50.0 ||
+                                _telemetry.humidity > 70.0,
                           ),
                         ),
                       ],
@@ -671,7 +713,8 @@ class _HomeViewBodyState extends State<HomeViewBody> {
                   subtitle: 'Room Temp (25-37)',
                   icon: Icons.thermostat_rounded,
                   progress: (_telemetry.airTemp - 20) / (40 - 20),
-                  isDanger: _telemetry.airTemp < 25.0 || _telemetry.airTemp > 37.0,
+                  isDanger:
+                      _telemetry.airTemp < 25.0 || _telemetry.airTemp > 37.0,
                 ),
               ),
               const SizedBox(width: 16),
@@ -682,13 +725,17 @@ class _HomeViewBodyState extends State<HomeViewBody> {
                   subtitle: 'Humidity (50-70)',
                   icon: Icons.water_drop_rounded,
                   progress: (_telemetry.humidity - 30) / (90 - 30),
-                  isDanger: _telemetry.humidity < 50.0 || _telemetry.humidity > 70.0,
+                  isDanger:
+                      _telemetry.humidity < 50.0 || _telemetry.humidity > 70.0,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          BabyTempCard(babyTemp: _telemetry.babyTemp, isDanger: _telemetry.isDanger),
+          BabyTempCard(
+            babyTemp: _telemetry.babyTemp,
+            isDanger: _telemetry.isDanger,
+          ),
           const SizedBox(height: 16),
           Row(
             children: [
