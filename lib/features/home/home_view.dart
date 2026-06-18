@@ -64,8 +64,8 @@ class _HomeViewState extends State<HomeView> {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: EdgeInsets.only(
-        top: 8,
-        bottom: math.max(0.0, MediaQuery.of(context).padding.bottom - 8),
+        top: 4,
+        bottom: math.max(0.0, MediaQuery.of(context).padding.bottom - 4),
       ),
       decoration: BoxDecoration(
         color: AppColors.cardBackground,
@@ -104,7 +104,7 @@ class _HomeViewState extends State<HomeView> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeInOut,
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.primary : Colors.transparent,
           borderRadius: BorderRadius.circular(28),
@@ -129,7 +129,7 @@ class _HomeViewState extends State<HomeView> {
                   : (isDark
                         ? const Color(0xFF9CA3AF)
                         : const Color(0xFF4A5568)),
-              size: 22,
+              size: 18,
             ),
             const SizedBox(height: 4),
             Text(
@@ -141,7 +141,7 @@ class _HomeViewState extends State<HomeView> {
                           ? const Color(0xFF9CA3AF)
                           : const Color(0xFF4A5568)),
                 fontWeight: FontWeight.bold,
-                fontSize: 12,
+                fontSize: 8,
               ),
             ),
           ],

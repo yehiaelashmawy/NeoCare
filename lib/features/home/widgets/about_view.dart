@@ -78,7 +78,13 @@ class AboutView extends StatelessWidget {
               const SizedBox(height: 32),
 
               // 2. Centered Stylized Premium N Logo
-              Center(child: Image.asset("assets/images/about.png")),
+              Center(
+                child: Image.asset(
+                  Theme.of(context).brightness == Brightness.dark
+                      ? 'assets/images/dark_about.png'
+                      : 'assets/images/about.png',
+                ),
+              ),
               const SizedBox(height: 32),
 
               // 3. About The System Card

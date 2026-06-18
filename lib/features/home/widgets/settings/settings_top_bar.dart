@@ -28,7 +28,9 @@ class SettingsTopBar extends StatelessWidget {
               ],
             ),
             child: Image.asset(
-              'assets/images/app_logo.png',
+              isDark
+                  ? 'assets/images/dark_logo.png'
+                  : 'assets/images/app_logo.png',
               height: 32,
               width: 32,
               fit: BoxFit.contain,

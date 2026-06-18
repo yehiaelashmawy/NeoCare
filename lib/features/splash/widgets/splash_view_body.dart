@@ -121,8 +121,9 @@ class _SplashViewBodyState extends State<SplashViewBody>
                 );
               },
               child: Image.asset(
-                'assets/images/app_logo.png',
-
+                Theme.of(context).brightness == Brightness.dark
+                    ? 'assets/images/dark_logo.png'
+                    : 'assets/images/app_logo.png',
                 fit: BoxFit.contain,
               ),
             ),
